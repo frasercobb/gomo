@@ -5,13 +5,13 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/blang/semver"
+	"github.com/Masterminds/semver/v3"
 )
 
 type Module struct {
 	Name        string
-	FromVersion semver.Version
-	ToVersion   semver.Version
+	FromVersion *semver.Version
+	ToVersion   *semver.Version
 }
 
 type Discoverer struct {
@@ -24,7 +24,7 @@ type Discoverer struct {
 func NewDiscoverer(executor Executor) *Discoverer {
 	return &Discoverer{
 		Executor:    executor,
-		ModuleRegex: "(.+): (.+) -> (.+)",
+		ModuleRegex: "'(.+): (.+) -> (.+)'",
 		ListCommand: "go",
 		ListCommandArgs: []string{
 			"list", "-u", "-f", "'{{if (and (not (or .Main .Indirect)) .Update)}}{{.Path}}: {{.Version}} -> {{.Update.Version}}{{end}}'", "-m", "all",
@@ -49,19 +49,22 @@ func (d *Discoverer) ParseModules(listOutput string) ([]Module, error) {
 	var modules []Module
 	split := strings.Split(listOutput, "\n")
 	for _, moduleLine := range split {
+		if moduleLine == "''" || moduleLine == "" {
+			continue
+		}
 		matches := re.FindStringSubmatch(moduleLine)
 		if len(matches) != 4 {
 			return nil, fmt.Errorf("regex was not able to find all matches")
 		}
 
-		from, err := semver.Parse(matches[2])
+		from, err := semver.NewVersion(matches[2])
 		if err != nil {
-			return nil, fmt.Errorf("parsing from version: %w", err)
+			return nil, fmt.Errorf("parsing from version %q: %w", from, err)
 		}
 
-		to, err := semver.Parse(matches[3])
+		to, err := semver.NewVersion(matches[3])
 		if err != nil {
-			return nil, fmt.Errorf("parsing to version: %w", err)
+			return nil, fmt.Errorf("parsing to version %q: %w", to, err)
 		}
 
 		modules = append(modules, Module{

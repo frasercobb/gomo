@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/blang/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -109,38 +109,38 @@ func Test_ParseModulesReturnsErrorWhenNotAllMatched(t *testing.T) {
 func Test_ParseModulesReturnsErrorWhenFromIsNotAValidSemver(t *testing.T) {
 	wantModule := Module{
 		Name:      "a-module-name",
-		ToVersion: semver.Version{Major: 0, Minor: 4, Patch: 5},
+		ToVersion: semver.MustParse("1.0.0"),
 	}
-	output := fmt.Sprintf("%s: %s -> %s", wantModule.Name, "not-a-from-version", wantModule.ToVersion)
+	output := moduleToListFormat(wantModule)
 	mockExecutor := mock.Executor{}
 	d := NewDiscoverer(&mockExecutor)
 
 	_, err := d.ParseModules(output)
 	require.Error(t, err)
 
-	assert.Contains(t, err.Error(), "parsing from version:")
+	assert.Contains(t, err.Error(), fmt.Sprintf("parsing from version %q:", wantModule.FromVersion))
 }
 
 func Test_ParseModulesReturnsErrorWhenToIsNotAValidSemver(t *testing.T) {
 	wantModule := Module{
 		Name:        "a-module-name",
-		FromVersion: semver.Version{Major: 0, Minor: 4, Patch: 5},
+		FromVersion: semver.MustParse("1.0.0"),
 	}
-	output := fmt.Sprintf("%s: %s -> %s", wantModule.Name, wantModule.FromVersion, "not-a-valid-semver")
+	output := moduleToListFormat(wantModule)
 	mockExecutor := mock.Executor{}
 	d := NewDiscoverer(&mockExecutor)
 
 	_, err := d.ParseModules(output)
 	require.Error(t, err)
 
-	assert.Contains(t, err.Error(), "parsing to version:")
+	assert.Contains(t, err.Error(), fmt.Sprintf("parsing to version %q:", wantModule.ToVersion))
 }
 
 func Test_ParseModulesReturnsExpectedModule(t *testing.T) {
 	wantModule := Module{
 		Name:        "a-module-name",
-		FromVersion: semver.Version{Major: 0, Minor: 3, Patch: 5},
-		ToVersion:   semver.Version{Major: 0, Minor: 4, Patch: 5},
+		FromVersion: semver.MustParse("1.0.0"),
+		ToVersion:   semver.MustParse("1.1.0"),
 	}
 	mockExecutor := mock.Executor{}
 	d := NewDiscoverer(&mockExecutor)
@@ -157,13 +157,13 @@ func Test_ParseModulesReturnsExpectedModules(t *testing.T) {
 	wantModules := []Module{
 		{
 			Name:        "a-module-name",
-			FromVersion: semver.Version{Major: 0, Minor: 3, Patch: 5},
-			ToVersion:   semver.Version{Major: 0, Minor: 4, Patch: 5},
+			FromVersion: semver.MustParse("1.0.0"),
+			ToVersion:   semver.MustParse("1.3.0"),
 		},
 		{
 			Name:        "another-module-name",
-			FromVersion: semver.Version{Major: 1, Minor: 2, Patch: 3},
-			ToVersion:   semver.Version{Major: 1, Minor: 2, Patch: 2},
+			FromVersion: semver.MustParse("1.0.0"),
+			ToVersion:   semver.MustParse("1.2.0"),
 		},
 	}
 	mockExecutor := mock.Executor{}
@@ -176,10 +176,43 @@ func Test_ParseModulesReturnsExpectedModules(t *testing.T) {
 	assert.Equal(t, wantModules, modules)
 }
 
+func Test_ParseModulesSkipsEmptyModuleLines(t *testing.T) {
+	wantModules := []Module{
+		{
+			Name:        "a-module-name",
+			FromVersion: semver.MustParse("1.0.0"),
+			ToVersion:   semver.MustParse("2.0.0"),
+		},
+		{
+			Name:        "another-module-name",
+			FromVersion: semver.MustParse("1.0.0"),
+			ToVersion:   semver.MustParse("3.0.0"),
+		},
+	}
+	mockExecutor := mock.Executor{}
+	d := NewDiscoverer(&mockExecutor)
+
+	var moduleListWithEmptyLines []string
+	moduleListWithEmptyLines = append(moduleListWithEmptyLines, "")
+	for _, module := range wantModules {
+		moduleListWithEmptyLines = append(moduleListWithEmptyLines, moduleToListFormat(module))
+	}
+	moduleListWithEmptyLines = append(moduleListWithEmptyLines, "''")
+
+	modules, err := d.ParseModules(strings.Join(moduleListWithEmptyLines, "\n"))
+	require.NoError(t, err)
+
+	assert.Equal(t, wantModules, modules)
+}
+
 func modulesToListFormat(modules ...Module) string {
 	var result []string
 	for _, module := range modules {
-		result = append(result, fmt.Sprintf("%s: %s -> %s", module.Name, module.FromVersion, module.ToVersion))
+		result = append(result, moduleToListFormat(module))
 	}
 	return strings.Join(result, "\n")
+}
+
+func moduleToListFormat(module Module) string {
+	return fmt.Sprintf("'%s: %s -> %s'", module.Name, module.FromVersion, module.ToVersion)
 }

@@ -23,7 +23,13 @@ func run() error {
 		return fmt.Errorf("listing modules: %w", err)
 	}
 
-	fmt.Print(listOutput)
+	modules, err := d.ParseModules(listOutput)
+	if err != nil {
+		fmt.Printf("Failed to parse modules: %s\n", err)
+	}
+	for _, module := range modules {
+		fmt.Printf("%+v\n", module)
+	}
 
 	return nil
 }
