@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os/exec"
-	"strings"
 )
 
 type Executor interface {
@@ -13,7 +12,6 @@ type Executor interface {
 type CommandExecutor struct{}
 
 func (c *CommandExecutor) Run(command string, commandArgs ...string) (string, error) {
-	fmt.Printf("%s %s\n", command, strings.Join(commandArgs, " "))
 	cmd := exec.Command(command, commandArgs...)
 
 	output, err := cmd.Output()

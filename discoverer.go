@@ -9,9 +9,9 @@ import (
 )
 
 type Module struct {
-	Name        string
-	FromVersion *semver.Version
-	ToVersion   *semver.Version
+	Name         string
+	FromVersion  *semver.Version
+	ToVersion    *semver.Version
 	MajorUpgrade bool
 	MinorUpgrade bool
 }
@@ -23,7 +23,9 @@ type Discoverer struct {
 	ListCommandArgs []string
 }
 
-const template = "'{{if (and (not (or .Main .Indirect)) .Update)}}==START=={{.Path}},{{.Version}},{{.Update.Version}}==END=={{end}}'"
+const (
+	template = "'{{if (and (not (or .Main .Indirect)) .Update)}}==START=={{.Path}},{{.Version}},{{.Update.Version}}==END=={{end}}'"
+)
 
 func NewDiscoverer(executor Executor) *Discoverer {
 	return &Discoverer{
@@ -51,34 +53,54 @@ func (d *Discoverer) ParseModules(listOutput string) ([]Module, error) {
 	}
 
 	var modules []Module
-	split := strings.Split(listOutput, "\n")
-	for _, moduleLine := range split {
-		if moduleLine == "''" || moduleLine == "" {
+	modulesLines := strings.Split(listOutput, "\n")
+	for _, line := range modulesLines {
+		if isInvalidModuleLine(line) {
 			continue
 		}
-		matches := re.FindStringSubmatch(moduleLine)
-		if len(matches) != 4 {
-			return nil, fmt.Errorf("regex was not able to find all matches")
-		}
 
-		from, err := semver.NewVersion(matches[2])
+		m, err := extractModule(line, re)
 		if err != nil {
-			return nil, fmt.Errorf("parsing from version %q: %w", from, err)
+			return nil, err
 		}
 
-		to, err := semver.NewVersion(matches[3])
-		if err != nil {
-			return nil, fmt.Errorf("parsing to version %q: %w", to, err)
-		}
-
-		modules = append(modules, Module{
-			Name:        matches[1],
-			FromVersion: from,
-			ToVersion:   to,
-			MajorUpgrade: to.Major() > from.Major(),
-			MinorUpgrade: to.Minor() > from.Minor(),
-		})
+		modules = append(modules, m)
 	}
 
 	return modules, nil
+}
+
+func isInvalidModuleLine(line string) bool {
+	if line == "''" {
+		return true
+	}
+	if line == "" {
+		return true
+	}
+	return false
+}
+
+func extractModule(moduleLine string, regex *regexp.Regexp) (Module, error) {
+	matches := regex.FindStringSubmatch(moduleLine)
+	if len(matches) != 4 {
+		return Module{}, fmt.Errorf("regex was not able to find all matches")
+	}
+
+	from, err := semver.NewVersion(matches[2])
+	if err != nil {
+		return Module{}, fmt.Errorf("parsing from version %q: %w", from, err)
+	}
+
+	to, err := semver.NewVersion(matches[3])
+	if err != nil {
+		return Module{}, fmt.Errorf("parsing to version %q: %w", to, err)
+	}
+
+	return Module{
+		Name:         matches[1],
+		FromVersion:  from,
+		ToVersion:    to,
+		MajorUpgrade: to.Major() > from.Major(),
+		MinorUpgrade: to.Minor() > from.Minor(),
+	}, nil
 }
