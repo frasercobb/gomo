@@ -27,8 +27,17 @@ func run() error {
 	if err != nil {
 		fmt.Printf("Failed to parse modules: %s\n", err)
 	}
+
 	for _, module := range modules {
-		fmt.Printf("%+v\n", module)
+		if module.MajorUpgrade {
+			fmt.Printf("Major: %+v\n", module)
+			continue
+		}
+
+		if module.MinorUpgrade {
+			fmt.Printf("Minor: %+v\n", module)
+			continue
+		}
 	}
 
 	return nil

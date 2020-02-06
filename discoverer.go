@@ -12,6 +12,8 @@ type Module struct {
 	Name        string
 	FromVersion *semver.Version
 	ToVersion   *semver.Version
+	MajorUpgrade bool
+	MinorUpgrade bool
 }
 
 type Discoverer struct {
@@ -73,6 +75,8 @@ func (d *Discoverer) ParseModules(listOutput string) ([]Module, error) {
 			Name:        matches[1],
 			FromVersion: from,
 			ToVersion:   to,
+			MajorUpgrade: to.Major() > from.Major(),
+			MinorUpgrade: to.Minor() > from.Minor(),
 		})
 	}
 

@@ -136,34 +136,26 @@ func Test_ParseModulesReturnsErrorWhenToIsNotAValidSemver(t *testing.T) {
 	assert.Contains(t, err.Error(), fmt.Sprintf("parsing to version %q:", wantModule.ToVersion))
 }
 
-func Test_ParseModulesReturnsExpectedModule(t *testing.T) {
-	wantModule := Module{
-		Name:        "a-module-name",
-		FromVersion: semver.MustParse("1.0.0"),
-		ToVersion:   semver.MustParse("1.1.0"),
-	}
-	mockExecutor := mock.Executor{}
-	d := NewDiscoverer(&mockExecutor)
-
-	moduleListOutput := modulesToListFormat(wantModule)
-	modules, err := d.ParseModules(moduleListOutput)
-	require.NoError(t, err)
-	require.Len(t, modules, 1)
-
-	assert.Equal(t, wantModule, modules[0])
-}
-
 func Test_ParseModulesReturnsExpectedModules(t *testing.T) {
 	wantModules := []Module{
 		{
-			Name:        "a-module-name",
+			Name:        "a-major-upgrade",
 			FromVersion: semver.MustParse("1.0.0"),
-			ToVersion:   semver.MustParse("1.3.0"),
+			ToVersion:   semver.MustParse("2.0.0"),
+			MajorUpgrade: true,
 		},
 		{
-			Name:        "another-module-name",
+			Name:        "a-minor-upgrade",
 			FromVersion: semver.MustParse("1.0.0"),
-			ToVersion:   semver.MustParse("1.2.0"),
+			ToVersion:   semver.MustParse("1.1.0"),
+			MinorUpgrade: true,
+		},
+		{
+			Name:        "a-patch-upgrade",
+			FromVersion: semver.MustParse("1.0.0"),
+			ToVersion:   semver.MustParse("1.0.1"),
+			MajorUpgrade: false,
+			MinorUpgrade: false,
 		},
 	}
 	mockExecutor := mock.Executor{}
@@ -171,7 +163,7 @@ func Test_ParseModulesReturnsExpectedModules(t *testing.T) {
 	moduleListOutput := modulesToListFormat(wantModules...)
 	modules, err := d.ParseModules(moduleListOutput)
 	require.NoError(t, err)
-	require.Len(t, modules, 2)
+	require.Len(t, modules, 3)
 
 	assert.Equal(t, wantModules, modules)
 }
@@ -181,12 +173,14 @@ func Test_ParseModulesSkipsEmptyModuleLines(t *testing.T) {
 		{
 			Name:        "a-module-name",
 			FromVersion: semver.MustParse("1.0.0"),
-			ToVersion:   semver.MustParse("2.0.0"),
+			ToVersion:   semver.MustParse("1.1.0"),
+			MinorUpgrade: true,
 		},
 		{
 			Name:        "another-module-name",
 			FromVersion: semver.MustParse("1.0.0"),
 			ToVersion:   semver.MustParse("3.0.0"),
+			MajorUpgrade: true,
 		},
 	}
 	mockExecutor := mock.Executor{}
