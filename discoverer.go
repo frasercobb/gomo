@@ -21,13 +21,15 @@ type Discoverer struct {
 	ListCommandArgs []string
 }
 
+const template = "'{{if (and (not (or .Main .Indirect)) .Update)}}==START=={{.Path}},{{.Version}},{{.Update.Version}}==END=={{end}}'"
+
 func NewDiscoverer(executor Executor) *Discoverer {
 	return &Discoverer{
 		Executor:    executor,
-		ModuleRegex: "'(.+): (.+) -> (.+)'",
+		ModuleRegex: "==START==(.+),(.+),(.+)==END==",
 		ListCommand: "go",
 		ListCommandArgs: []string{
-			"list", "-u", "-f", "'{{if (and (not (or .Main .Indirect)) .Update)}}{{.Path}}: {{.Version}} -> {{.Update.Version}}{{end}}'", "-m", "all",
+			"list", "-m", "-u", "-f", template, "all",
 		},
 	}
 }

@@ -22,7 +22,7 @@ func Test_ListModulesCallsExecutorRun(t *testing.T) {
 	runCalls := mockExecutor.RunCalls
 	require.Len(t, runCalls, 1)
 
-	listArgs := "list -u -f '{{if (and (not (or .Main .Indirect)) .Update)}}{{.Path}}: {{.Version}} -> {{.Update.Version}}{{end}}' -m all"
+	listArgs := "list -m -u -f '{{if (and (not (or .Main .Indirect)) .Update)}}==START=={{.Path}},{{.Version}},{{.Update.Version}}==END=={{end}}' all"
 	assert.Equal(t, runCalls[0], mock.RunCall{
 		Command: "go",
 		Args:    listArgs,
@@ -96,7 +96,7 @@ func Test_ParseModulesReturnsErrorWhenInvalidModuleRegex(t *testing.T) {
 }
 
 func Test_ParseModulesReturnsErrorWhenNotAllMatched(t *testing.T) {
-	output := "example.com/a/module: 1.0.0 ->"
+	output := "===START===example.com/a/module,1.0.0===END==="
 	mockExecutor := mock.Executor{}
 	d := NewDiscoverer(&mockExecutor)
 
@@ -214,5 +214,5 @@ func modulesToListFormat(modules ...Module) string {
 }
 
 func moduleToListFormat(module Module) string {
-	return fmt.Sprintf("'%s: %s -> %s'", module.Name, module.FromVersion, module.ToVersion)
+	return fmt.Sprintf("==START==%s,%s,%s==END==", module.Name, module.FromVersion, module.ToVersion)
 }
