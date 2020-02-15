@@ -16,7 +16,7 @@ func Test_ListModulesCallsExecutorRun(t *testing.T) {
 	mockExecutor := mock.Executor{}
 	d := NewDiscoverer(&mockExecutor)
 
-	_, err := d.ListModules()
+	_, err := d.listModules()
 	require.NoError(t, err)
 
 	runCalls := mockExecutor.RunCalls
@@ -34,7 +34,7 @@ func Test_ListModulesReturnsErrorFromExecutor(t *testing.T) {
 	mockExecutor := mock.Executor{RunError: wantError}
 	d := NewDiscoverer(&mockExecutor)
 
-	_, err := d.ListModules()
+	_, err := d.listModules()
 
 	assert.Error(t, wantError, err)
 }
@@ -56,7 +56,7 @@ func Test_ListModulesReturnsModules(t *testing.T) {
 		Executor: &mockExecutor,
 	}
 
-	moduleOutput, err := d.ListModules()
+	moduleOutput, err := d.listModules()
 	require.NoError(t, err)
 
 	assert.Equal(t, modulesListOutput, moduleOutput)
@@ -78,7 +78,7 @@ func Test_ListModulesHandlesLatestModules(t *testing.T) {
 		Executor: &mockExecutor,
 	}
 
-	moduleOutput, err := d.ListModules()
+	moduleOutput, err := d.listModules()
 	require.NoError(t, err)
 
 	assert.Equal(t, result, moduleOutput)
@@ -89,7 +89,7 @@ func Test_ParseModulesReturnsErrorWhenInvalidModuleRegex(t *testing.T) {
 	d := NewDiscoverer(&mockExecutor)
 	d.ModuleRegex = "not a valid regex ("
 
-	_, err := d.ParseModules("")
+	_, err := d.parseModules("")
 	require.Error(t, err)
 
 	assert.Contains(t, err.Error(), "error parsing regexp")
@@ -100,7 +100,7 @@ func Test_ParseModulesReturnsErrorWhenNotAllMatched(t *testing.T) {
 	mockExecutor := mock.Executor{}
 	d := NewDiscoverer(&mockExecutor)
 
-	_, err := d.ParseModules(output)
+	_, err := d.parseModules(output)
 	require.Error(t, err)
 
 	assert.Contains(t, err.Error(), "regex was not able to find all matches")
@@ -115,7 +115,7 @@ func Test_ParseModulesReturnsErrorWhenFromIsNotAValidSemver(t *testing.T) {
 	mockExecutor := mock.Executor{}
 	d := NewDiscoverer(&mockExecutor)
 
-	_, err := d.ParseModules(output)
+	_, err := d.parseModules(output)
 	require.Error(t, err)
 
 	assert.Contains(t, err.Error(), fmt.Sprintf("parsing from version %q:", wantModule.FromVersion))
@@ -130,7 +130,7 @@ func Test_ParseModulesReturnsErrorWhenToIsNotAValidSemver(t *testing.T) {
 	mockExecutor := mock.Executor{}
 	d := NewDiscoverer(&mockExecutor)
 
-	_, err := d.ParseModules(output)
+	_, err := d.parseModules(output)
 	require.Error(t, err)
 
 	assert.Contains(t, err.Error(), fmt.Sprintf("parsing to version %q:", wantModule.ToVersion))
@@ -161,7 +161,7 @@ func Test_ParseModulesReturnsExpectedModules(t *testing.T) {
 	mockExecutor := mock.Executor{}
 	d := NewDiscoverer(&mockExecutor)
 	moduleListOutput := modulesToListFormat(wantModules...)
-	modules, err := d.ParseModules(moduleListOutput)
+	modules, err := d.parseModules(moduleListOutput)
 	require.NoError(t, err)
 	require.Len(t, modules, 3)
 
@@ -193,7 +193,7 @@ func Test_ParseModulesSkipsEmptyModuleLines(t *testing.T) {
 	}
 	moduleListWithEmptyLines = append(moduleListWithEmptyLines, "''")
 
-	modules, err := d.ParseModules(strings.Join(moduleListWithEmptyLines, "\n"))
+	modules, err := d.parseModules(strings.Join(moduleListWithEmptyLines, "\n"))
 	require.NoError(t, err)
 
 	assert.Equal(t, wantModules, modules)

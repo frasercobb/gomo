@@ -9,7 +9,7 @@ func main() {
 	log.Flags()
 	err := run()
 	if err != nil {
-		log.Println(err)
+		log.Printf("Encountered an error %s", err)
 	}
 }
 
@@ -18,9 +18,9 @@ func run() error {
 
 	d := NewDiscoverer(&cmdExecutor)
 
-	listOutput, err := d.ListModules()
+	modules, err := d.GetModules()
 	if err != nil {
-		return fmt.Errorf("listing modules: %w", err)
+		return fmt.Errorf("getting modules: %w", err)
 	}
 
 	modules, err := d.ParseModules(listOutput)
@@ -28,11 +28,8 @@ func run() error {
 		fmt.Printf("Failed to parse modules: %s\n", err)
 	}
 
-	for _, module := range modules {
-		if module.MajorUpgrade {
-			fmt.Printf("Major: %+v\n", module)
-			continue
-		}
+	return nil
+}
 
 		if module.MinorUpgrade {
 			fmt.Printf("Minor: %+v\n", module)

@@ -38,7 +38,21 @@ func NewDiscoverer(executor Executor) *Discoverer {
 	}
 }
 
-func (d *Discoverer) ListModules() (string, error) {
+func (d *Discoverer) GetModules() ([]Module, error){
+	listOutput, err := d.listModules()
+	if err != nil {
+		return nil, fmt.Errorf("listing modules: %w", err)
+	}
+
+	modules, err := d.parseModules(listOutput)
+	if err != nil {
+		return nil, fmt.Errorf("parsing modules: %w", err)
+	}
+
+	return modules, nil
+}
+
+func (d *Discoverer) listModules() (string, error) {
 	output, err := d.Executor.Run(d.ListCommand, d.ListCommandArgs...)
 	if err != nil {
 		return "", fmt.Errorf("running '%s %s': %w", d.ListCommand, d.ListCommandArgs, err)
@@ -46,7 +60,7 @@ func (d *Discoverer) ListModules() (string, error) {
 	return output, nil
 }
 
-func (d *Discoverer) ParseModules(listOutput string) ([]Module, error) {
+func (d *Discoverer) parseModules(listOutput string) ([]Module, error) {
 	re, err := regexp.Compile(d.ModuleRegex)
 	if err != nil {
 		return nil, err
