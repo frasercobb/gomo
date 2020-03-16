@@ -106,7 +106,7 @@ func Test_ParseModulesReturnsErrorWhenNotAllMatched(t *testing.T) {
 	assert.Contains(t, err.Error(), "regex was not able to find all matches")
 }
 
-func Test_ParseModulesReturnsErrorWhenFromIsNotAValidSemver(t *testing.T) {
+func Test_ParseModulesReturnsErrorWhenFromVersionIsNotAValidSemver(t *testing.T) {
 	wantModule := Module{
 		Name:      "a-module-name",
 		ToVersion: semver.MustParse("1.0.0"),
@@ -121,7 +121,7 @@ func Test_ParseModulesReturnsErrorWhenFromIsNotAValidSemver(t *testing.T) {
 	assert.Contains(t, err.Error(), fmt.Sprintf("parsing from version %q:", wantModule.FromVersion))
 }
 
-func Test_ParseModulesReturnsErrorWhenToIsNotAValidSemver(t *testing.T) {
+func Test_ParseModulesReturnsErrorWhenToVersionIsNotAValidSemver(t *testing.T) {
 	wantModule := Module{
 		Name:        "a-module-name",
 		FromVersion: semver.MustParse("1.0.0"),
@@ -139,21 +139,21 @@ func Test_ParseModulesReturnsErrorWhenToIsNotAValidSemver(t *testing.T) {
 func Test_ParseModulesReturnsExpectedModules(t *testing.T) {
 	wantModules := []Module{
 		{
-			Name:        "a-major-upgrade",
-			FromVersion: semver.MustParse("1.0.0"),
-			ToVersion:   semver.MustParse("2.0.0"),
+			Name:         "a-major-upgrade",
+			FromVersion:  semver.MustParse("1.0.0"),
+			ToVersion:    semver.MustParse("2.0.0"),
 			MajorUpgrade: true,
 		},
 		{
-			Name:        "a-minor-upgrade",
-			FromVersion: semver.MustParse("1.0.0"),
-			ToVersion:   semver.MustParse("1.1.0"),
+			Name:         "a-minor-upgrade",
+			FromVersion:  semver.MustParse("1.0.0"),
+			ToVersion:    semver.MustParse("1.1.0"),
 			MinorUpgrade: true,
 		},
 		{
-			Name:        "a-patch-upgrade",
-			FromVersion: semver.MustParse("1.0.0"),
-			ToVersion:   semver.MustParse("1.0.1"),
+			Name:         "a-patch-upgrade",
+			FromVersion:  semver.MustParse("1.0.0"),
+			ToVersion:    semver.MustParse("1.0.1"),
 			MajorUpgrade: false,
 			MinorUpgrade: false,
 		},
@@ -171,15 +171,15 @@ func Test_ParseModulesReturnsExpectedModules(t *testing.T) {
 func Test_ParseModulesSkipsEmptyModuleLines(t *testing.T) {
 	wantModules := []Module{
 		{
-			Name:        "a-module-name",
-			FromVersion: semver.MustParse("1.0.0"),
-			ToVersion:   semver.MustParse("1.1.0"),
+			Name:         "a-module-name",
+			FromVersion:  semver.MustParse("1.0.0"),
+			ToVersion:    semver.MustParse("1.1.0"),
 			MinorUpgrade: true,
 		},
 		{
-			Name:        "another-module-name",
-			FromVersion: semver.MustParse("1.0.0"),
-			ToVersion:   semver.MustParse("3.0.0"),
+			Name:         "another-module-name",
+			FromVersion:  semver.MustParse("1.0.0"),
+			ToVersion:    semver.MustParse("3.0.0"),
 			MajorUpgrade: true,
 		},
 	}

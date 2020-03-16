@@ -14,7 +14,7 @@ func main() {
 }
 
 func run() error {
-	cmdExecutor := CommandExecutor{}
+	var cmdExecutor CommandExecutor
 
 	d := NewDiscoverer(&cmdExecutor)
 
@@ -23,19 +23,7 @@ func run() error {
 		return fmt.Errorf("getting modules: %w", err)
 	}
 
-	modules, err := d.ParseModules(listOutput)
-	if err != nil {
-		fmt.Printf("Failed to parse modules: %s\n", err)
-	}
-
-	return nil
-}
-
-		if module.MinorUpgrade {
-			fmt.Printf("Minor: %+v\n", module)
-			continue
-		}
-	}
+	fmt.Printf("%+v", modules)
 
 	return nil
 }
