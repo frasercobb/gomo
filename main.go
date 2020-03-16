@@ -14,9 +14,7 @@ func main() {
 }
 
 func run() error {
-	var cmdExecutor CommandExecutor
-
-	d := NewDiscoverer(&cmdExecutor)
+	d := NewDiscoverer()
 
 	modules, err := d.GetModules()
 	if err != nil {

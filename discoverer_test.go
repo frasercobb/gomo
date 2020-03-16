@@ -13,8 +13,10 @@ import (
 )
 
 func Test_ListModulesCallsExecutorRun(t *testing.T) {
-	mockExecutor := mock.Executor{}
-	d := NewDiscoverer(&mockExecutor)
+	mockExecutor := &mock.Executor{}
+	d := NewDiscoverer(
+		WithExecutor(mockExecutor),
+	)
 
 	_, err := d.listModules()
 	require.NoError(t, err)
@@ -32,7 +34,9 @@ func Test_ListModulesCallsExecutorRun(t *testing.T) {
 func Test_ListModulesReturnsErrorFromExecutor(t *testing.T) {
 	wantError := fmt.Errorf("an-error-from-executor")
 	mockExecutor := mock.Executor{RunError: wantError}
-	d := NewDiscoverer(&mockExecutor)
+	d := NewDiscoverer(
+		WithExecutor(&mockExecutor),
+	)
 
 	_, err := d.listModules()
 
@@ -52,9 +56,9 @@ func Test_ListModulesReturnsModules(t *testing.T) {
 		CommandOutput: modulesListOutput,
 	}
 
-	d := Discoverer{
-		Executor: &mockExecutor,
-	}
+	d := NewDiscoverer(
+		WithExecutor(&mockExecutor),
+	)
 
 	moduleOutput, err := d.listModules()
 	require.NoError(t, err)
@@ -74,9 +78,9 @@ func Test_ListModulesHandlesLatestModules(t *testing.T) {
 		CommandOutput: result,
 	}
 
-	d := Discoverer{
-		Executor: &mockExecutor,
-	}
+	d := NewDiscoverer(
+		WithExecutor(&mockExecutor),
+	)
 
 	moduleOutput, err := d.listModules()
 	require.NoError(t, err)
@@ -86,7 +90,9 @@ func Test_ListModulesHandlesLatestModules(t *testing.T) {
 
 func Test_ParseModulesReturnsErrorWhenInvalidModuleRegex(t *testing.T) {
 	mockExecutor := mock.Executor{}
-	d := NewDiscoverer(&mockExecutor)
+	d := NewDiscoverer(
+		WithExecutor(&mockExecutor),
+	)
 	d.ModuleRegex = "not a valid regex ("
 
 	_, err := d.parseModules("")
@@ -98,7 +104,9 @@ func Test_ParseModulesReturnsErrorWhenInvalidModuleRegex(t *testing.T) {
 func Test_ParseModulesReturnsErrorWhenNotAllMatched(t *testing.T) {
 	output := "===START===example.com/a/module,1.0.0===END==="
 	mockExecutor := mock.Executor{}
-	d := NewDiscoverer(&mockExecutor)
+	d := NewDiscoverer(
+		WithExecutor(&mockExecutor),
+	)
 
 	_, err := d.parseModules(output)
 	require.Error(t, err)
@@ -113,7 +121,9 @@ func Test_ParseModulesReturnsErrorWhenFromVersionIsNotAValidSemver(t *testing.T)
 	}
 	output := moduleToListFormat(wantModule)
 	mockExecutor := mock.Executor{}
-	d := NewDiscoverer(&mockExecutor)
+	d := NewDiscoverer(
+		WithExecutor(&mockExecutor),
+	)
 
 	_, err := d.parseModules(output)
 	require.Error(t, err)
@@ -128,7 +138,9 @@ func Test_ParseModulesReturnsErrorWhenToVersionIsNotAValidSemver(t *testing.T) {
 	}
 	output := moduleToListFormat(wantModule)
 	mockExecutor := mock.Executor{}
-	d := NewDiscoverer(&mockExecutor)
+	d := NewDiscoverer(
+		WithExecutor(&mockExecutor),
+	)
 
 	_, err := d.parseModules(output)
 	require.Error(t, err)
@@ -159,7 +171,9 @@ func Test_ParseModulesReturnsExpectedModules(t *testing.T) {
 		},
 	}
 	mockExecutor := mock.Executor{}
-	d := NewDiscoverer(&mockExecutor)
+	d := NewDiscoverer(
+		WithExecutor(&mockExecutor),
+	)
 	moduleListOutput := modulesToListFormat(wantModules...)
 	modules, err := d.parseModules(moduleListOutput)
 	require.NoError(t, err)
@@ -184,7 +198,9 @@ func Test_ParseModulesSkipsEmptyModuleLines(t *testing.T) {
 		},
 	}
 	mockExecutor := mock.Executor{}
-	d := NewDiscoverer(&mockExecutor)
+	d := NewDiscoverer(
+		WithExecutor(&mockExecutor),
+	)
 
 	var moduleListWithEmptyLines []string
 	moduleListWithEmptyLines = append(moduleListWithEmptyLines, "")

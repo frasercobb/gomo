@@ -27,18 +27,32 @@ const (
 	template = "'{{if (and (not (or .Main .Indirect)) .Update)}}==START=={{.Path}},{{.Version}},{{.Update.Version}}==END=={{end}}'"
 )
 
-func NewDiscoverer(executor Executor) *Discoverer {
-	return &Discoverer{
-		Executor:    executor,
+type Option func(*Discoverer)
+
+func NewDiscoverer(options ...Option) *Discoverer {
+	d := &Discoverer{
+		Executor: &CommandExecutor{},
 		ModuleRegex: "==START==(.+),(.+),(.+)==END==",
 		ListCommand: "go",
 		ListCommandArgs: []string{
 			"list", "-m", "-u", "-f", template, "all",
 		},
 	}
+
+	for _, option := range options {
+		option(d)
+	}
+
+	return d
 }
 
-func (d *Discoverer) GetModules() ([]Module, error){
+func WithExecutor(executor Executor) Option {
+	return func(d *Discoverer) {
+		d.Executor = executor
+	}
+}
+
+func (d *Discoverer) GetModules() ([]Module, error) {
 	listOutput, err := d.listModules()
 	if err != nil {
 		return nil, fmt.Errorf("listing modules: %w", err)
