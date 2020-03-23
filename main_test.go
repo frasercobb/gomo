@@ -11,5 +11,6 @@ func Test_EndToEndHappyPath(t *testing.T) {
 		t.Skip("skipping in short mode")
 	}
 	err := run()
+
 	assert.NoError(t, err)
 }

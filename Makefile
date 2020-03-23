@@ -2,7 +2,15 @@ GOCMD=go
 
 .PHONY: lint
 lint:
+	${GOCMD} run github.com/golangci/golangci-lint/cmd/golangci-lint run
+
+.PHONY: lint-fix
+lint-fix:
 	${GOCMD} run github.com/golangci/golangci-lint/cmd/golangci-lint run --fix
+
+.PHONY: watch-lint
+watch-lint:
+	${GOCMD} run github.com/cespare/reflex --decoration=none --inverse-regex='^build/|^vendor/' make lint
 
 .PHONY: test
 test:

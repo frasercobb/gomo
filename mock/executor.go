@@ -18,5 +18,6 @@ func (e *Executor) Run(command string, commandArgs ...string) (string, error) {
 		Command: command,
 		Args:    strings.Join(commandArgs, " "),
 	})
+
 	return e.CommandOutput, e.RunError
 }

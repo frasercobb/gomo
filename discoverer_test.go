@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -213,6 +214,135 @@ func Test_ParseModulesSkipsEmptyModuleLines(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, wantModules, modules)
+}
+
+func Test_ChangelogCallsGivenHttpClient(t *testing.T) {
+	name := "github.com/stretchr/testify"
+	given := Module{
+		Name:         name,
+		MajorUpgrade: false,
+		MinorUpgrade: false,
+	}
+
+	mockClient := mock.NewHTTPClient()
+	d := NewDiscoverer(
+		WithHTTPClient(mockClient),
+	)
+
+	_, _ = d.GetChangelog(given)
+
+	calls := mockClient.GetCalls()
+	assert.Len(t, calls, 1)
+}
+
+func Test_ChangelogCallsHttpClientWithExpectedURL(t *testing.T) {
+	name := "github.com/stretchr/testify"
+	given := Module{
+		Name:         name,
+		MajorUpgrade: false,
+		MinorUpgrade: false,
+	}
+
+	mockClient := mock.NewHTTPClient()
+	d := NewDiscoverer(
+		WithHTTPClient(mockClient),
+	)
+
+	_, _ = d.GetChangelog(given)
+
+	calls := mockClient.GetCalls()
+	require.Len(t, calls, 1)
+
+	url := calls[0].URL
+	require.NotNil(t, url)
+	queryParams := url.RawQuery
+
+	wantSearch := fmt.Sprintf("repo:%s+filename:CHANGELOG.md", name)
+	assert.Contains(t, queryParams, wantSearch)
+}
+
+func Test_ChangelogReturnsErrorFromClient(t *testing.T) {
+	given := Module{
+		Name:         "github.com/stretchr/testify",
+		MajorUpgrade: false,
+		MinorUpgrade: false,
+	}
+
+	mockClient := mock.NewHTTPClient()
+	wantError := fmt.Errorf("an error from the HTTP Client")
+	mockClient.GivenErrorIsReturned(wantError)
+	d := NewDiscoverer(
+		WithHTTPClient(mockClient),
+	)
+
+	_, err := d.GetChangelog(given)
+	require.Error(t, err)
+
+	assert.EqualError(t, err, fmt.Sprintf("failed to make a request for changelog: %s", wantError))
+}
+
+func Test_ReturnsUnmarshallingErrorWhenResponseInvalid(t *testing.T) {
+	mockClient := mock.NewHTTPClient()
+	mockClient.GivenResponseIsReturned(200, "not-valid-json", nil)
+	d := NewDiscoverer(
+		WithHTTPClient(mockClient),
+	)
+
+	_, err := d.GetChangelog(Module{})
+	require.Error(t, err)
+
+	assert.Contains(t, err.Error(), "unexpected response from github API:")
+}
+
+func Test_ReturnsChangelog(t *testing.T) {
+	module := Module{
+		Name: "a-name",
+	}
+	wantURL := "url"
+	githubResponse := GithubFileSearchResponse{
+		TotalCount: 1,
+		Items: []Item{
+			{Name: module.Name, Path: "a-path", HTMLURL: wantURL},
+		},
+	}
+	body, err := json.Marshal(githubResponse)
+	require.NoError(t, err)
+
+	mockClient := mock.NewHTTPClient()
+	mockClient.GivenResponseIsReturned(200, string(body), nil)
+	d := NewDiscoverer(
+		WithHTTPClient(mockClient),
+	)
+
+	gotChangelog, err := d.GetChangelog(module)
+	require.NoError(t, err)
+
+	assert.Equal(t, wantURL, gotChangelog)
+}
+
+func Test_ReturnsChangelogReturnsErrorWhenMultipleSearchResultsFound(t *testing.T) {
+	githubResponse := GithubFileSearchResponse{
+		TotalCount: 2,
+		Items: []Item{
+			{Name: "name", Path: "a-path", HTMLURL: "one-url"},
+			{Name: "another module", Path: "another-path", HTMLURL: "two-url"},
+		},
+	}
+	body, err := json.Marshal(githubResponse)
+	require.NoError(t, err)
+
+	mockClient := mock.NewHTTPClient()
+	mockClient.GivenResponseIsReturned(200, string(body), nil)
+	d := NewDiscoverer(
+		WithHTTPClient(mockClient),
+	)
+
+	_, err = d.GetChangelog(Module{})
+	require.Error(t, err)
+
+	assert.Contains(t, err.Error(), "found more than one file search result:")
+	assert.Contains(t, err.Error(), githubResponse.Items[0].HTMLURL)
+	assert.Contains(t, err.Error(), githubResponse.Items[1].HTMLURL)
 }
 
 func modulesToListFormat(modules ...Module) string {
