@@ -216,7 +216,7 @@ func Test_ParseModulesSkipsEmptyModuleLines(t *testing.T) {
 	assert.Equal(t, wantModules, modules)
 }
 
-func Test_ChangelogCallsGivenHttpClient(t *testing.T) {
+func Test_GetChangelogCallsGivenHttpClient(t *testing.T) {
 	name := "github.com/stretchr/testify"
 	given := Module{
 		Name:         name,
@@ -246,7 +246,7 @@ func Test_GetGithubRepoFromModule(t *testing.T) {
 	assert.Equal(t, wantRepo, gotRepo)
 }
 
-func Test_ChangelogCallsHttpClientWithExpectedQueryParams(t *testing.T) {
+func Test_GetChangelogCallsHttpClientWithExpectedQueryParams(t *testing.T) {
 	repo := "stretchr/testify"
 	name := fmt.Sprintf("github.com/%s", repo)
 	given := Module{
@@ -273,7 +273,7 @@ func Test_ChangelogCallsHttpClientWithExpectedQueryParams(t *testing.T) {
 	assert.Contains(t, queryParams, wantSearch)
 }
 
-func Test_ChangelogReturnsErrorFromClient(t *testing.T) {
+func Test_GetChangelogReturnsErrorFromClient(t *testing.T) {
 	given := Module{
 		Name:         "github.com/stretchr/testify",
 		MajorUpgrade: false,
@@ -293,7 +293,7 @@ func Test_ChangelogReturnsErrorFromClient(t *testing.T) {
 	assert.EqualError(t, err, fmt.Sprintf("failed to make a request for changelog: %s", wantError))
 }
 
-func Test_ReturnsUnmarshallingErrorWhenResponseInvalid(t *testing.T) {
+func Test_GetChangelogReturnsUnmarshallingErrorWhenResponseInvalid(t *testing.T) {
 	mockClient := mock.NewHTTPClient()
 	mockClient.GivenResponseIsReturned(200, "not-valid-json", nil)
 	d := NewDiscoverer(
@@ -306,7 +306,7 @@ func Test_ReturnsUnmarshallingErrorWhenResponseInvalid(t *testing.T) {
 	assert.Contains(t, err.Error(), "unexpected response from github API:")
 }
 
-func Test_ReturnsChangelog(t *testing.T) {
+func Test_GetChangelogReturnsExpectedURL(t *testing.T) {
 	module := Module{
 		Name: "a-name",
 	}
@@ -332,7 +332,7 @@ func Test_ReturnsChangelog(t *testing.T) {
 	assert.Equal(t, wantURL, gotChangelog)
 }
 
-func Test_ReturnsChangelogReturnsErrorWhenMultipleSearchResultsFound(t *testing.T) {
+func Test_GetChangelogReturnsErrorWhenMultipleSearchResultsFound(t *testing.T) {
 	githubResponse := GithubFileSearchResponse{
 		TotalCount: 2,
 		Items: []Item{
@@ -357,7 +357,7 @@ func Test_ReturnsChangelogReturnsErrorWhenMultipleSearchResultsFound(t *testing.
 	assert.Contains(t, err.Error(), githubResponse.Items[1].HTMLURL)
 }
 
-func Test_ReturnsChangelogReturnsErrorNoSearchResultsFound(t *testing.T) {
+func Test_GetChangelogReturnsErrorWhenNoSearchResultsFound(t *testing.T) {
 	githubResponse := GithubFileSearchResponse{
 		TotalCount: 0,
 		Items:      []Item{},
