@@ -235,8 +235,20 @@ func Test_ChangelogCallsGivenHttpClient(t *testing.T) {
 	assert.Len(t, calls, 1)
 }
 
-func Test_ChangelogCallsHttpClientWithExpectedURL(t *testing.T) {
-	name := "github.com/stretchr/testify"
+func Test_GetGithubRepoFromModule(t *testing.T) {
+	wantRepo := "a-project/a-wantRepo-name"
+	m := Module{
+		Name: fmt.Sprintf("github.com/%s", wantRepo),
+	}
+	gotRepo, err := getGithubRepoFromModule(m)
+	require.NoError(t, err)
+
+	assert.Equal(t, wantRepo, gotRepo)
+}
+
+func Test_ChangelogCallsHttpClientWithExpectedQueryParams(t *testing.T) {
+	repo := "stretchr/testify"
+	name := fmt.Sprintf("github.com/%s", repo)
 	given := Module{
 		Name:         name,
 		MajorUpgrade: false,
@@ -257,7 +269,7 @@ func Test_ChangelogCallsHttpClientWithExpectedURL(t *testing.T) {
 	require.NotNil(t, url)
 	queryParams := url.RawQuery
 
-	wantSearch := fmt.Sprintf("repo:%s+filename:CHANGELOG.md", name)
+	wantSearch := fmt.Sprintf("repo:%s+filename:CHANGELOG.md", repo)
 	assert.Contains(t, queryParams, wantSearch)
 }
 
@@ -343,6 +355,26 @@ func Test_ReturnsChangelogReturnsErrorWhenMultipleSearchResultsFound(t *testing.
 	assert.Contains(t, err.Error(), "found more than one file search result:")
 	assert.Contains(t, err.Error(), githubResponse.Items[0].HTMLURL)
 	assert.Contains(t, err.Error(), githubResponse.Items[1].HTMLURL)
+}
+
+func Test_ReturnsChangelogReturnsErrorNoSearchResultsFound(t *testing.T) {
+	githubResponse := GithubFileSearchResponse{
+		TotalCount: 0,
+		Items:      []Item{},
+	}
+	body, err := json.Marshal(githubResponse)
+	require.NoError(t, err)
+
+	mockClient := mock.NewHTTPClient()
+	mockClient.GivenResponseIsReturned(200, string(body), nil)
+	d := NewDiscoverer(
+		WithHTTPClient(mockClient),
+	)
+
+	_, err = d.GetChangelog(Module{})
+	require.Error(t, err)
+
+	assert.Contains(t, err.Error(), "failed to find changelog")
 }
 
 func modulesToListFormat(modules ...Module) string {

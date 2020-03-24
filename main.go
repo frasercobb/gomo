@@ -23,5 +23,14 @@ func run() error {
 
 	fmt.Printf("%+v", modules)
 
+	for _, mod := range modules {
+		changelog, err := d.GetChangelog(mod)
+		if err != nil {
+			fmt.Printf("Error: %s", err)
+			continue
+		}
+		fmt.Printf("Changelog for %+v: %s", mod, changelog)
+	}
+
 	return nil
 }

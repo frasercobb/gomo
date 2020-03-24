@@ -46,6 +46,7 @@ func NewDiscoverer(options ...Option) *Discoverer {
 		ListCommandArgs: []string{
 			"list", "-m", "-u", "-f", template, "all",
 		},
+		HTTPClient: http.DefaultClient,
 	}
 
 	for _, option := range options {
@@ -93,11 +94,16 @@ type Item struct {
 }
 
 func (d *Discoverer) GetChangelog(module Module) (string, error) {
+	repo, err := getGithubRepoFromModule(module)
+	if err != nil {
+		return "", err
+	}
+
 	u := &url.URL{
 		Scheme:   "https",
 		Host:     "api.github.com",
 		Path:     "/search/code",
-		RawQuery: fmt.Sprintf("q=repo:%s%sfilename:CHANGELOG.md", module.Name, "+"),
+		RawQuery: fmt.Sprintf("q=repo:%s%sfilename:CHANGELOG.md", repo, "+"),
 	}
 	res, err := d.HTTPClient.Do(&http.Request{
 		URL: u,
@@ -111,6 +117,10 @@ func (d *Discoverer) GetChangelog(module Module) (string, error) {
 		return "", fmt.Errorf("unexpected response from github API: %w", err)
 	}
 
+	if len(githubResp.Items) == 0 {
+		return "", fmt.Errorf("failed to find changelog")
+	}
+
 	if len(githubResp.Items) > 1 {
 		files := make([]string, len(githubResp.Items))
 		for _, item := range githubResp.Items {
@@ -120,6 +130,18 @@ func (d *Discoverer) GetChangelog(module Module) (string, error) {
 	}
 
 	return githubResp.Items[0].HTMLURL, nil
+}
+
+func getGithubRepoFromModule(module Module) (string, error) {
+	const githubRepoRegex = "github.com/(.+)"
+	re, err := regexp.Compile(githubRepoRegex)
+	if err != nil {
+		return "", err
+	}
+
+	matches := re.FindStringSubmatch(module.Name)
+
+	return matches[1], nil
 }
 
 func (d *Discoverer) listModules() (string, error) {
