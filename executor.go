@@ -11,6 +11,10 @@ type Executor interface {
 
 type CommandExecutor struct{}
 
+func NewCommandExecutor() *CommandExecutor {
+	return &CommandExecutor{}
+}
+
 func (c *CommandExecutor) Run(command string, commandArgs ...string) (string, error) {
 	cmd := exec.Command(command, commandArgs...)
 

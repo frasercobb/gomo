@@ -293,6 +293,15 @@ func Test_GetChangelogReturnsErrorFromClient(t *testing.T) {
 	assert.EqualError(t, err, fmt.Sprintf("failed to make a request for changelog: %s", wantError))
 }
 
+func Test_GetChangelogReturnsMatchingErrorWhenCannotParseModuleName(t *testing.T) {
+	d := NewDiscoverer()
+
+	_, err := d.GetChangelog(Module{Name: "not-a-valid-module-name"})
+	require.Error(t, err)
+
+	assert.Contains(t, err.Error(), "unable to parse module name")
+}
+
 func Test_GetChangelogReturnsUnmarshallingErrorWhenResponseInvalid(t *testing.T) {
 	mockClient := mock.NewHTTPClient()
 	mockClient.GivenResponseIsReturned(200, "not-valid-json", nil)
@@ -300,16 +309,16 @@ func Test_GetChangelogReturnsUnmarshallingErrorWhenResponseInvalid(t *testing.T)
 		WithHTTPClient(mockClient),
 	)
 
-	_, err := d.GetChangelog(Module{})
+	_, err := d.GetChangelog(Module{
+		Name: "github.com/foo/bar",
+	})
 	require.Error(t, err)
 
 	assert.Contains(t, err.Error(), "unexpected response from github API:")
 }
 
 func Test_GetChangelogReturnsExpectedURL(t *testing.T) {
-	module := Module{
-		Name: "a-name",
-	}
+	module := newValidModule()
 	wantURL := "url"
 	githubResponse := GithubFileSearchResponse{
 		TotalCount: 1,
@@ -332,6 +341,12 @@ func Test_GetChangelogReturnsExpectedURL(t *testing.T) {
 	assert.Equal(t, wantURL, gotChangelog)
 }
 
+func newValidModule() Module {
+	return Module{
+		Name: "github.com/project/repo",
+	}
+}
+
 func Test_GetChangelogReturnsErrorWhenMultipleSearchResultsFound(t *testing.T) {
 	githubResponse := GithubFileSearchResponse{
 		TotalCount: 2,
@@ -349,7 +364,7 @@ func Test_GetChangelogReturnsErrorWhenMultipleSearchResultsFound(t *testing.T) {
 		WithHTTPClient(mockClient),
 	)
 
-	_, err = d.GetChangelog(Module{})
+	_, err = d.GetChangelog(newValidModule())
 	require.Error(t, err)
 
 	assert.Contains(t, err.Error(), "found more than one file search result:")
@@ -371,7 +386,7 @@ func Test_GetChangelogReturnsErrorWhenNoSearchResultsFound(t *testing.T) {
 		WithHTTPClient(mockClient),
 	)
 
-	_, err = d.GetChangelog(Module{})
+	_, err = d.GetChangelog(newValidModule())
 	require.Error(t, err)
 
 	assert.Contains(t, err.Error(), "failed to find changelog")

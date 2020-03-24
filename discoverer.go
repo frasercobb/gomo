@@ -40,13 +40,13 @@ type Option func(*Discoverer)
 
 func NewDiscoverer(options ...Option) *Discoverer {
 	d := &Discoverer{
-		Executor:    &CommandExecutor{},
+		Executor:    nil,
 		ModuleRegex: "==START==(.+),(.+),(.+)==END==",
 		ListCommand: "go",
 		ListCommandArgs: []string{
 			"list", "-m", "-u", "-f", template, "all",
 		},
-		HTTPClient: http.DefaultClient,
+		HTTPClient: nil,
 	}
 
 	for _, option := range options {
@@ -93,10 +93,39 @@ type Item struct {
 	HTMLURL string `json:"html_url"`
 }
 
+func getChangelogFromGithubSearchResult(searchResponse *GithubFileSearchResponse) (string, error) {
+	if len(searchResponse.Items) == 0 {
+		return "", fmt.Errorf("failed to find changelog")
+	}
+
+	if len(searchResponse.Items) > 1 {
+		files := make([]string, len(searchResponse.Items))
+		for _, item := range searchResponse.Items {
+			files = append(files, item.HTMLURL)
+		}
+		return "", fmt.Errorf("found more than one file search result: %s", files)
+	}
+	return searchResponse.Items[0].HTMLURL, nil
+}
+
 func (d *Discoverer) GetChangelog(module Module) (string, error) {
-	repo, err := getGithubRepoFromModule(module)
+	githubResp, err := d.searchGithubForChangelog(module)
 	if err != nil {
 		return "", err
+	}
+
+	result, err := getChangelogFromGithubSearchResult(githubResp)
+	if err != nil {
+		return module.Name, err
+	}
+
+	return result, err
+}
+
+func (d *Discoverer) searchGithubForChangelog(module Module) (*GithubFileSearchResponse, error) {
+	repo, err := getGithubRepoFromModule(module)
+	if err != nil {
+		return nil, err
 	}
 
 	u := &url.URL{
@@ -109,27 +138,16 @@ func (d *Discoverer) GetChangelog(module Module) (string, error) {
 		URL: u,
 	})
 	if err != nil {
-		return "", fmt.Errorf("failed to make a request for changelog: %w", err)
+		return nil, fmt.Errorf("failed to make a request for changelog: %w", err)
 	}
+
 	var githubResp GithubFileSearchResponse
 	decoder := json.NewDecoder(res.Body)
 	if err = decoder.Decode(&githubResp); err != nil {
-		return "", fmt.Errorf("unexpected response from github API: %w", err)
+		return nil, fmt.Errorf("unexpected response from github API: %w", err)
 	}
 
-	if len(githubResp.Items) == 0 {
-		return "", fmt.Errorf("failed to find changelog")
-	}
-
-	if len(githubResp.Items) > 1 {
-		files := make([]string, len(githubResp.Items))
-		for _, item := range githubResp.Items {
-			files = append(files, item.HTMLURL)
-		}
-		return "", fmt.Errorf("found more than one file search result: %s", files)
-	}
-
-	return githubResp.Items[0].HTMLURL, nil
+	return &githubResp, nil
 }
 
 func getGithubRepoFromModule(module Module) (string, error) {
@@ -140,6 +158,9 @@ func getGithubRepoFromModule(module Module) (string, error) {
 	}
 
 	matches := re.FindStringSubmatch(module.Name)
+	if len(matches) != 2 {
+		return "", fmt.Errorf("unable to parse module name")
+	}
 
 	return matches[1], nil
 }

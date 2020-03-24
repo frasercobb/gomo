@@ -3,6 +3,7 @@ linters:
     - prealloc
     - wsl
     - lll
+    - gomnd
   enable-all: true
 
 linters-settings:
