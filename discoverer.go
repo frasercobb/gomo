@@ -34,6 +34,7 @@ type Discoverer struct {
 const (
 	template           = "'{{if (and (not (or .Main .Indirect)) .Update)}}==START=={{.Path}},{{.Version}},{{.Update.Version}}==END=={{end}}'"
 	expectedNumMatches = 4
+	changelogFilename  = "CHANGELOG.md"
 )
 
 type Option func(*Discoverer)
@@ -94,18 +95,13 @@ type Item struct {
 }
 
 func getChangelogFromGithubSearchResult(searchResponse *GithubFileSearchResponse) (string, error) {
-	if len(searchResponse.Items) == 0 {
-		return "", fmt.Errorf("failed to find changelog")
+	for _, item := range searchResponse.Items {
+		if item.Path == changelogFilename {
+			return item.HTMLURL, nil
+		}
 	}
 
-	if len(searchResponse.Items) > 1 {
-		files := make([]string, len(searchResponse.Items))
-		for _, item := range searchResponse.Items {
-			files = append(files, item.HTMLURL)
-		}
-		return "", fmt.Errorf("found more than one file search result: %s", files)
-	}
-	return searchResponse.Items[0].HTMLURL, nil
+	return "", fmt.Errorf("failed to find a root level %s", changelogFilename)
 }
 
 func (d *Discoverer) GetChangelog(module Module) (string, error) {

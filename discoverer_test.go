@@ -301,7 +301,6 @@ func Test_GetChangelogReturnsMatchingErrorWhenCannotParseModuleName(t *testing.T
 
 	assert.Contains(t, err.Error(), "unable to parse module name")
 }
-
 func Test_GetChangelogReturnsUnmarshallingErrorWhenResponseInvalid(t *testing.T) {
 	mockClient := mock.NewHTTPClient()
 	mockClient.GivenResponseIsReturned(200, "not-valid-json", nil)
@@ -323,7 +322,7 @@ func Test_GetChangelogReturnsExpectedURL(t *testing.T) {
 	githubResponse := GithubFileSearchResponse{
 		TotalCount: 1,
 		Items: []Item{
-			{Name: module.Name, Path: "a-path", HTMLURL: wantURL},
+			{Name: module.Name, Path: "CHANGELOG.md", HTMLURL: wantURL},
 		},
 	}
 	body, err := json.Marshal(githubResponse)
@@ -347,12 +346,34 @@ func newValidModule() Module {
 	}
 }
 
-func Test_GetChangelogReturnsErrorWhenMultipleSearchResultsFound(t *testing.T) {
+func Test_ReturnsRootChangelogIfMultipleFound(t *testing.T) {
 	githubResponse := GithubFileSearchResponse{
 		TotalCount: 2,
 		Items: []Item{
-			{Name: "name", Path: "a-path", HTMLURL: "one-url"},
 			{Name: "another module", Path: "another-path", HTMLURL: "two-url"},
+			{Name: "name", Path: "CHANGELOG.md", HTMLURL: "one-url"},
+		},
+	}
+	body, err := json.Marshal(githubResponse)
+	require.NoError(t, err)
+
+	mockClient := mock.NewHTTPClient()
+	mockClient.GivenResponseIsReturned(200, string(body), nil)
+	d := NewDiscoverer(
+		WithHTTPClient(mockClient),
+	)
+
+	changelog, err := d.GetChangelog(newValidModule())
+	require.NoError(t, err)
+
+	assert.Equal(t, githubResponse.Items[1].HTMLURL, changelog)
+}
+
+func Test_GetChangelogReturnsErrorWhenChangelogIsNotFound(t *testing.T) {
+	githubResponse := GithubFileSearchResponse{
+		TotalCount: 1,
+		Items: []Item{
+			{Name: "name", Path: "a-path", HTMLURL: "one-url"},
 		},
 	}
 	body, err := json.Marshal(githubResponse)
@@ -367,9 +388,7 @@ func Test_GetChangelogReturnsErrorWhenMultipleSearchResultsFound(t *testing.T) {
 	_, err = d.GetChangelog(newValidModule())
 	require.Error(t, err)
 
-	assert.Contains(t, err.Error(), "found more than one file search result:")
-	assert.Contains(t, err.Error(), githubResponse.Items[0].HTMLURL)
-	assert.Contains(t, err.Error(), githubResponse.Items[1].HTMLURL)
+	assert.Contains(t, err.Error(), "failed to find a root level CHANGELOG.md")
 }
 
 func Test_GetChangelogReturnsErrorWhenNoSearchResultsFound(t *testing.T) {
@@ -389,7 +408,7 @@ func Test_GetChangelogReturnsErrorWhenNoSearchResultsFound(t *testing.T) {
 	_, err = d.GetChangelog(newValidModule())
 	require.Error(t, err)
 
-	assert.Contains(t, err.Error(), "failed to find changelog")
+	assert.Contains(t, err.Error(), "failed to find a root level CHANGELOG.md")
 }
 
 func modulesToListFormat(modules ...Module) string {
