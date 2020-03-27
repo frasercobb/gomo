@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gotest.tools/assert"
 )
 
 func Test_UpgradeReturnsErrorFromExecutor(t *testing.T) {
@@ -17,7 +17,7 @@ func Test_UpgradeReturnsErrorFromExecutor(t *testing.T) {
 
 	err := u.UpgradeModules([]Module{{Name: "foo/bar"}})
 
-	assert.ErrorContains(t, err, fmt.Sprintf(`upgrading module "foo/bar": %s`, wantError.Error()))
+	assert.Contains(t, err.Error(), fmt.Sprintf(`upgrading module "foo/bar": %s`, wantError.Error()))
 }
 
 func Test_UpgradeCallsExecutorRunWithTheCorrectArguments(t *testing.T) {

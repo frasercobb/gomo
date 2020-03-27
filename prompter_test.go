@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/Masterminds/semver/v3"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_CreateSelectOptions(t *testing.T) {
@@ -23,7 +23,7 @@ func Test_CreateSelectOptions(t *testing.T) {
 
 	result := createSelectOptions(modules)
 
-	assert.DeepEqual(t, result, []string{
+	assert.Equal(t, result, []string{
 		"foo/bar 0.0.1 -> 0.0.2",
 		"frasercobb/gomo 1.2.3 -> 1.3.4",
 	})
@@ -34,5 +34,5 @@ func Test_AskForUpgradesReturnsErrorWhenNoModulesGiven(t *testing.T) {
 
 	_, err := p.AskForUpgrades([]Module{})
 
-	assert.ErrorContains(t, err, "unable to create upgrade prompt: ")
+	assert.Contains(t, err.Error(), "unable to create upgrade prompt: ")
 }

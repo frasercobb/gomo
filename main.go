@@ -27,10 +27,20 @@ func run() error {
 		return fmt.Errorf("getting modules: %w", err)
 	}
 
+	if len(modules) ==  0 {
+		fmt.Println("No modules can be upgraded")
+		return nil
+	}
+
 	p := NewPrompter()
 	modulesToUpgrade, err := p.AskForUpgrades(modules)
 	if err != nil {
 		return fmt.Errorf("asking for which modules to upgrade: %w", err)
+	}
+
+	if len(modulesToUpgrade) ==  0 {
+		fmt.Println("No modules selected")
+		return nil
 	}
 
 	u := NewUpgrader(
