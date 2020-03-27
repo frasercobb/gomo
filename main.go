@@ -2,15 +2,13 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 )
 
 func main() {
-	log.Flags()
 	if err := run(); err != nil {
-		log.Printf("Encountered an error %s", err)
+		fmt.Printf("Encountered an error %s", err)
 	}
 }
 
@@ -29,10 +27,11 @@ func run() error {
 		return fmt.Errorf("getting modules: %w", err)
 	}
 
-	fmt.Printf("Name\t\t\t\tCurrent\tUpgrade\tChangelog\n")
-	for _, mod := range modules {
-		changelog, _ := d.GetChangelog(mod)
-		fmt.Printf("%s\t%s\t%s\t%s\n", mod.Name, mod.FromVersion, mod.ToVersion, changelog)
+	p := NewPrompter()
+	_, err = p.AskForUpgrades(modules)
+	if err != nil {
+		return fmt.Errorf("asking for which modules to upgrade: %w", err)
 	}
+
 	return nil
 }

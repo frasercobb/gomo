@@ -37,9 +37,9 @@ const (
 	changelogFilename  = "CHANGELOG.md"
 )
 
-type Option func(*Discoverer)
+type DiscovererOption func(*Discoverer)
 
-func NewDiscoverer(options ...Option) *Discoverer {
+func NewDiscoverer(options ...DiscovererOption) *Discoverer {
 	d := &Discoverer{
 		Executor:    nil,
 		ModuleRegex: "==START==(.+),(.+),(.+)==END==",
@@ -57,13 +57,13 @@ func NewDiscoverer(options ...Option) *Discoverer {
 	return d
 }
 
-func WithExecutor(executor Executor) Option {
+func WithExecutor(executor Executor) DiscovererOption {
 	return func(d *Discoverer) {
 		d.Executor = executor
 	}
 }
 
-func WithHTTPClient(client HTTPClient) Option {
+func WithHTTPClient(client HTTPClient) DiscovererOption {
 	return func(d *Discoverer) {
 		d.HTTPClient = client
 	}
