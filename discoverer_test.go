@@ -9,12 +9,10 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/frasercobb/gomo/mock"
 )
 
 func Test_ListModulesCallsExecutorRun(t *testing.T) {
-	mockExecutor := &mock.Executor{}
+	mockExecutor := &MockExecutor{}
 	d := NewDiscoverer(
 		WithExecutor(mockExecutor),
 	)
@@ -26,7 +24,7 @@ func Test_ListModulesCallsExecutorRun(t *testing.T) {
 	require.Len(t, runCalls, 1)
 
 	listArgs := "list -m -u -f '{{if (and (not (or .Main .Indirect)) .Update)}}==START=={{.Path}},{{.Version}},{{.Update.Version}}==END=={{end}}' all"
-	assert.Equal(t, runCalls[0], mock.RunCall{
+	assert.Equal(t, runCalls[0], RunCall{
 		Command: "go",
 		Args:    listArgs,
 	})
@@ -34,7 +32,7 @@ func Test_ListModulesCallsExecutorRun(t *testing.T) {
 
 func Test_ListModulesReturnsErrorFromExecutor(t *testing.T) {
 	wantError := fmt.Errorf("an-error-from-executor")
-	mockExecutor := mock.Executor{RunError: wantError}
+	mockExecutor := MockExecutor{RunError: wantError}
 	d := NewDiscoverer(
 		WithExecutor(&mockExecutor),
 	)
@@ -53,7 +51,7 @@ func Test_ListModulesReturnsModules(t *testing.T) {
 	}
 
 	modulesListOutput := modulesToListFormat(wantModules...)
-	mockExecutor := mock.Executor{
+	mockExecutor := MockExecutor{
 		CommandOutput: modulesListOutput,
 	}
 
@@ -75,7 +73,7 @@ func Test_ListModulesHandlesLatestModules(t *testing.T) {
 	}
 
 	result := strings.Join(commandOutput, "\n")
-	mockExecutor := mock.Executor{
+	mockExecutor := MockExecutor{
 		CommandOutput: result,
 	}
 
@@ -90,7 +88,7 @@ func Test_ListModulesHandlesLatestModules(t *testing.T) {
 }
 
 func Test_ParseModulesReturnsErrorWhenInvalidModuleRegex(t *testing.T) {
-	mockExecutor := mock.Executor{}
+	mockExecutor := MockExecutor{}
 	d := NewDiscoverer(
 		WithExecutor(&mockExecutor),
 	)
@@ -104,7 +102,7 @@ func Test_ParseModulesReturnsErrorWhenInvalidModuleRegex(t *testing.T) {
 
 func Test_ParseModulesReturnsErrorWhenNotAllMatched(t *testing.T) {
 	output := "===START===example.com/a/module,1.0.0===END==="
-	mockExecutor := mock.Executor{}
+	mockExecutor := MockExecutor{}
 	d := NewDiscoverer(
 		WithExecutor(&mockExecutor),
 	)
@@ -121,7 +119,7 @@ func Test_ParseModulesReturnsErrorWhenFromVersionIsNotAValidSemver(t *testing.T)
 		ToVersion: semver.MustParse("1.0.0"),
 	}
 	output := moduleToListFormat(wantModule)
-	mockExecutor := mock.Executor{}
+	mockExecutor := MockExecutor{}
 	d := NewDiscoverer(
 		WithExecutor(&mockExecutor),
 	)
@@ -138,7 +136,7 @@ func Test_ParseModulesReturnsErrorWhenToVersionIsNotAValidSemver(t *testing.T) {
 		FromVersion: semver.MustParse("1.0.0"),
 	}
 	output := moduleToListFormat(wantModule)
-	mockExecutor := mock.Executor{}
+	mockExecutor := MockExecutor{}
 	d := NewDiscoverer(
 		WithExecutor(&mockExecutor),
 	)
@@ -171,7 +169,7 @@ func Test_ParseModulesReturnsExpectedModules(t *testing.T) {
 			MinorUpgrade: false,
 		},
 	}
-	mockExecutor := mock.Executor{}
+	mockExecutor := MockExecutor{}
 	d := NewDiscoverer(
 		WithExecutor(&mockExecutor),
 	)
@@ -198,7 +196,7 @@ func Test_ParseModulesSkipsEmptyModuleLines(t *testing.T) {
 			MajorUpgrade: true,
 		},
 	}
-	mockExecutor := mock.Executor{}
+	mockExecutor := MockExecutor{}
 	d := NewDiscoverer(
 		WithExecutor(&mockExecutor),
 	)
@@ -224,7 +222,7 @@ func Test_GetChangelogCallsGivenHttpClient(t *testing.T) {
 		MinorUpgrade: false,
 	}
 
-	mockClient := mock.NewHTTPClient()
+	mockClient := NewMockHTTPClient()
 	d := NewDiscoverer(
 		WithHTTPClient(mockClient),
 	)
@@ -255,7 +253,7 @@ func Test_GetChangelogCallsHttpClientWithExpectedQueryParams(t *testing.T) {
 		MinorUpgrade: false,
 	}
 
-	mockClient := mock.NewHTTPClient()
+	mockClient := NewMockHTTPClient()
 	d := NewDiscoverer(
 		WithHTTPClient(mockClient),
 	)
@@ -280,7 +278,7 @@ func Test_GetChangelogReturnsErrorFromClient(t *testing.T) {
 		MinorUpgrade: false,
 	}
 
-	mockClient := mock.NewHTTPClient()
+	mockClient := NewMockHTTPClient()
 	wantError := fmt.Errorf("an error from the HTTP Client")
 	mockClient.GivenErrorIsReturned(wantError)
 	d := NewDiscoverer(
@@ -302,7 +300,7 @@ func Test_GetChangelogReturnsMatchingErrorWhenCannotParseModuleName(t *testing.T
 	assert.Contains(t, err.Error(), "unable to parse module name")
 }
 func Test_GetChangelogReturnsUnmarshallingErrorWhenResponseInvalid(t *testing.T) {
-	mockClient := mock.NewHTTPClient()
+	mockClient := NewMockHTTPClient()
 	mockClient.GivenResponseIsReturned(200, "not-valid-json", nil)
 	d := NewDiscoverer(
 		WithHTTPClient(mockClient),
@@ -328,7 +326,7 @@ func Test_GetChangelogReturnsExpectedURL(t *testing.T) {
 	body, err := json.Marshal(githubResponse)
 	require.NoError(t, err)
 
-	mockClient := mock.NewHTTPClient()
+	mockClient := NewMockHTTPClient()
 	mockClient.GivenResponseIsReturned(200, string(body), nil)
 	d := NewDiscoverer(
 		WithHTTPClient(mockClient),
@@ -357,7 +355,7 @@ func Test_ReturnsRootChangelogIfMultipleFound(t *testing.T) {
 	body, err := json.Marshal(githubResponse)
 	require.NoError(t, err)
 
-	mockClient := mock.NewHTTPClient()
+	mockClient := NewMockHTTPClient()
 	mockClient.GivenResponseIsReturned(200, string(body), nil)
 	d := NewDiscoverer(
 		WithHTTPClient(mockClient),
@@ -379,7 +377,7 @@ func Test_GetChangelogReturnsErrorWhenChangelogIsNotFound(t *testing.T) {
 	body, err := json.Marshal(githubResponse)
 	require.NoError(t, err)
 
-	mockClient := mock.NewHTTPClient()
+	mockClient := NewMockHTTPClient()
 	mockClient.GivenResponseIsReturned(200, string(body), nil)
 	d := NewDiscoverer(
 		WithHTTPClient(mockClient),
@@ -399,7 +397,7 @@ func Test_GetChangelogReturnsErrorWhenNoSearchResultsFound(t *testing.T) {
 	body, err := json.Marshal(githubResponse)
 	require.NoError(t, err)
 
-	mockClient := mock.NewHTTPClient()
+	mockClient := NewMockHTTPClient()
 	mockClient.GivenResponseIsReturned(200, string(body), nil)
 	d := NewDiscoverer(
 		WithHTTPClient(mockClient),

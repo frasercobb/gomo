@@ -1,4 +1,4 @@
-package mock
+package main
 
 import (
 	"bytes"
@@ -7,35 +7,35 @@ import (
 	"net/http"
 )
 
-type HTTPClient struct {
+type MockHTTPClient struct {
 	returnResponse *http.Response
 	returnError    error
 	calls          []*http.Request
 }
 
-func NewHTTPClient() *HTTPClient {
-	return &HTTPClient{
+func NewMockHTTPClient() *MockHTTPClient {
+	return &MockHTTPClient{
 		returnResponse: nil,
 		returnError:    fmt.Errorf("Client.Do was called unexpectedly"),
 		calls:          []*http.Request{},
 	}
 }
 
-func (c *HTTPClient) Do(req *http.Request) (*http.Response, error) {
+func (c *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	c.calls = append(c.calls, req)
 	return c.returnResponse, c.returnError
 }
 
-func (c *HTTPClient) GetCalls() []*http.Request {
+func (c *MockHTTPClient) GetCalls() []*http.Request {
 	return c.calls
 }
 
-func (c *HTTPClient) GivenErrorIsReturned(err error) {
+func (c *MockHTTPClient) GivenErrorIsReturned(err error) {
 	c.returnResponse = nil
 	c.returnError = err
 }
 
-func (c *HTTPClient) GivenResponseIsReturned(statusCode int, body string, header http.Header) {
+func (c *MockHTTPClient) GivenResponseIsReturned(statusCode int, body string, header http.Header) {
 	bodyContent := ioutil.NopCloser(bytes.NewReader([]byte(body)))
 	response := &http.Response{Body: bodyContent, StatusCode: statusCode, Header: header}
 	c.returnResponse = response

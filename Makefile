@@ -12,10 +12,6 @@ lint-fix:
 watch-lint:
 	${GOCMD} run github.com/cespare/reflex --decoration=none --inverse-regex='^build/|^vendor/' make lint
 
-.PHONY: test
-test:
-	${GOCMD} test ./... -v -race -count=1
-
 .PHONY: unit
 unit:
 	${GOCMD} test ./... -v -race -count=1 --short

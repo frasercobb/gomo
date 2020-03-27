@@ -136,6 +136,7 @@ func (d *Discoverer) searchGithubForChangelog(module Module) (*GithubFileSearchR
 	if err != nil {
 		return nil, fmt.Errorf("failed to make a request for changelog: %w", err)
 	}
+	defer res.Body.Close()
 
 	var githubResp GithubFileSearchResponse
 	decoder := json.NewDecoder(res.Body)
