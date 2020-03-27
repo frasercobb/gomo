@@ -4,4 +4,4 @@ go:
   - 1.14.x
 
 script:
-  - make test
+  - make unit
