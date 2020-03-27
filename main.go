@@ -27,7 +27,7 @@ func run() error {
 		return fmt.Errorf("getting modules: %w", err)
 	}
 
-	if len(modules) ==  0 {
+	if len(modules) == 0 {
 		fmt.Println("No modules can be upgraded")
 		return nil
 	}
@@ -38,7 +38,7 @@ func run() error {
 		return fmt.Errorf("asking for which modules to upgrade: %w", err)
 	}
 
-	if len(modulesToUpgrade) ==  0 {
+	if len(modulesToUpgrade) == 0 {
 		fmt.Println("No modules selected")
 		return nil
 	}
