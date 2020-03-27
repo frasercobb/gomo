@@ -6,3 +6,10 @@ go:
 script:
   - make unit
   - make lint
+
+deploy:
+  - provider: script
+    skip_cleanup: true
+    script: curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh
+    on:
+      tags: true
