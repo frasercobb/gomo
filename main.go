@@ -28,9 +28,16 @@ func run() error {
 	}
 
 	p := NewPrompter()
-	_, err = p.AskForUpgrades(modules)
+	modulesToUpgrade, err := p.AskForUpgrades(modules)
 	if err != nil {
 		return fmt.Errorf("asking for which modules to upgrade: %w", err)
+	}
+
+	u := NewUpgrader(
+		WithUpgradeExecutor(cmdExecutor),
+	)
+	if err := u.UpgradeModules(modulesToUpgrade); err != nil {
+		return err
 	}
 
 	return nil
