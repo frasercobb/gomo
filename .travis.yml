@@ -5,3 +5,4 @@ go:
 
 script:
   - make unit
+  - make lint
