@@ -14,7 +14,7 @@ deploy:
     on:
       tags: true
   - provider: script
-      skip_cleanup: true
-      script: goreleaser
-      on:
-        tags: true
+    skip_cleanup: true
+    script: goreleaser
+    on:
+      tags: true
