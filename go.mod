@@ -3,7 +3,7 @@ module github.com/frasercobb/gomo
 go 1.13
 
 require (
-	github.com/AlecAivazis/survey/v2 v2.0.7
+	github.com/AlecAivazis/survey/v2 v2.0.6
 	github.com/Masterminds/semver/v3 v3.0.3
 	github.com/Netflix/go-expect v0.0.0-20200312175327-da48e75238e2 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
