@@ -10,11 +10,6 @@ script:
 deploy:
   - provider: script
     skip_cleanup: true
-    script: curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh
-    on:
-      tags: true
-  - provider: script
-    skip_cleanup: true
-    script: goreleaser
+    script: curl -sL http://git.io/goreleaser | bash
     on:
       tags: true
