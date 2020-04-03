@@ -190,9 +190,9 @@ func Test_ParseModulesSkipsEmptyModuleLines(t *testing.T) {
 			MinorUpgrade: true,
 		},
 		{
-			Name:         "another-module-name",
-			FromVersion:  semver.MustParse("1.0.0"),
-			ToVersion:    semver.MustParse("3.0.0"),
+			Name:        "another-module-name",
+			FromVersion: semver.MustParse("1.0.0"),
+			ToVersion:   semver.MustParse("3.0.0"),
 		},
 	}
 	mockExecutor := MockExecutor{}
@@ -216,7 +216,7 @@ func Test_ParseModulesSkipsEmptyModuleLines(t *testing.T) {
 func Test_GetChangelogCallsGivenHttpClient(t *testing.T) {
 	name := "github.com/stretchr/testify"
 	given := Module{
-		Name:         name,
+		Name: name,
 	}
 
 	mockClient := NewMockHTTPClient()
