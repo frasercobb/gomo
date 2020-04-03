@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/fatih/color"
 )
 
 type Prompter struct{}
@@ -34,6 +35,7 @@ func (p *Prompter) AskForUpgrades(modules []Module) ([]Module, error) {
 }
 
 func createSelectOptions(modules []Module) []string {
+	color.NoColor = false
 	var result []string
 	for _, mod := range modules {
 		result = append(result, moduleToSelectPrompt(mod))
@@ -42,5 +44,13 @@ func createSelectOptions(modules []Module) []string {
 }
 
 func moduleToSelectPrompt(mod Module) string {
-	return fmt.Sprintf("%s %s -> %s", mod.Name, mod.FromVersion, mod.ToVersion)
+	result := fmt.Sprintf("%s %s -> %s", mod.Name, mod.FromVersion, mod.ToVersion)
+	if mod.PatchUpgrade {
+		result = color.GreenString(result)
+	}
+
+	if mod.MinorUpgrade {
+		result = color.BlueString(result)
+	}
+	return result
 }

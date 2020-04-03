@@ -15,7 +15,7 @@ type Module struct {
 	Name         string
 	FromVersion  *semver.Version
 	ToVersion    *semver.Version
-	MajorUpgrade bool
+	PatchUpgrade bool
 	MinorUpgrade bool
 }
 
@@ -38,6 +38,17 @@ const (
 )
 
 type DiscovererOption func(*Discoverer)
+
+type GithubFileSearchResponse struct {
+	TotalCount int    `json:"total_count"`
+	Items      []Item `json:"items"`
+}
+
+type Item struct {
+	Name    string `json:"name"`
+	Path    string `json:"path"`
+	HTMLURL string `json:"html_url"`
+}
 
 func NewDiscoverer(options ...DiscovererOption) *Discoverer {
 	d := &Discoverer{
@@ -81,17 +92,6 @@ func (d *Discoverer) GetModules() ([]Module, error) {
 	}
 
 	return modules, nil
-}
-
-type GithubFileSearchResponse struct {
-	TotalCount int    `json:"total_count"`
-	Items      []Item `json:"items"`
-}
-
-type Item struct {
-	Name    string `json:"name"`
-	Path    string `json:"path"`
-	HTMLURL string `json:"html_url"`
 }
 
 func getChangelogFromGithubSearchResult(searchResponse *GithubFileSearchResponse) (string, error) {
@@ -224,7 +224,7 @@ func extractModule(moduleLine string, regex *regexp.Regexp) (Module, error) {
 		Name:         matches[1],
 		FromVersion:  from,
 		ToVersion:    to,
-		MajorUpgrade: to.Major() > from.Major(),
+		PatchUpgrade: to.Patch() > from.Patch(),
 		MinorUpgrade: to.Minor() > from.Minor(),
 	}, nil
 }

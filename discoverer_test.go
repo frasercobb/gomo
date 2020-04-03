@@ -153,7 +153,7 @@ func Test_ParseModulesReturnsExpectedModules(t *testing.T) {
 			Name:         "a-major-upgrade",
 			FromVersion:  semver.MustParse("1.0.0"),
 			ToVersion:    semver.MustParse("2.0.0"),
-			MajorUpgrade: true,
+			PatchUpgrade: false,
 		},
 		{
 			Name:         "a-minor-upgrade",
@@ -165,7 +165,7 @@ func Test_ParseModulesReturnsExpectedModules(t *testing.T) {
 			Name:         "a-patch-upgrade",
 			FromVersion:  semver.MustParse("1.0.0"),
 			ToVersion:    semver.MustParse("1.0.1"),
-			MajorUpgrade: false,
+			PatchUpgrade: true,
 			MinorUpgrade: false,
 		},
 	}
@@ -190,10 +190,9 @@ func Test_ParseModulesSkipsEmptyModuleLines(t *testing.T) {
 			MinorUpgrade: true,
 		},
 		{
-			Name:         "another-module-name",
-			FromVersion:  semver.MustParse("1.0.0"),
-			ToVersion:    semver.MustParse("3.0.0"),
-			MajorUpgrade: true,
+			Name:        "another-module-name",
+			FromVersion: semver.MustParse("1.0.0"),
+			ToVersion:   semver.MustParse("3.0.0"),
 		},
 	}
 	mockExecutor := MockExecutor{}
@@ -217,9 +216,7 @@ func Test_ParseModulesSkipsEmptyModuleLines(t *testing.T) {
 func Test_GetChangelogCallsGivenHttpClient(t *testing.T) {
 	name := "github.com/stretchr/testify"
 	given := Module{
-		Name:         name,
-		MajorUpgrade: false,
-		MinorUpgrade: false,
+		Name: name,
 	}
 
 	mockClient := NewMockHTTPClient()
@@ -249,7 +246,7 @@ func Test_GetChangelogCallsHttpClientWithExpectedQueryParams(t *testing.T) {
 	name := fmt.Sprintf("github.com/%s", repo)
 	given := Module{
 		Name:         name,
-		MajorUpgrade: false,
+		PatchUpgrade: false,
 		MinorUpgrade: false,
 	}
 
@@ -274,7 +271,7 @@ func Test_GetChangelogCallsHttpClientWithExpectedQueryParams(t *testing.T) {
 func Test_GetChangelogReturnsErrorFromClient(t *testing.T) {
 	given := Module{
 		Name:         "github.com/stretchr/testify",
-		MajorUpgrade: false,
+		PatchUpgrade: false,
 		MinorUpgrade: false,
 	}
 

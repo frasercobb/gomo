@@ -22,7 +22,7 @@ watch:
 
 .PHONY: testsum
 testsum:
-	${GOCMD} run gotest.tools/gotestsum --format dots --raw-command -- go test --short --json ./...
+	${GOCMD} run gotest.tools/gotestsum --format dots --raw-command -- go test -v --short --json ./...
 
 .PHONY: build
 build:
