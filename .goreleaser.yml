@@ -23,3 +23,7 @@ changelog:
     - '^docs:'
     - '^build:'
     - '^test:'
+release:
+  github:
+    owner: frasercobb
+    name: gomo
