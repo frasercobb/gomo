@@ -1,5 +1,8 @@
 GOCMD=go
 
+.PHONY: ci
+ci: unit lint
+
 .PHONY: lint
 lint:
 	${GOCMD} run github.com/golangci/golangci-lint/cmd/golangci-lint run
