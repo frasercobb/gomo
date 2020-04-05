@@ -6,6 +6,7 @@ go:
 script:
   - make unit
   - make lint
+  - echo "FOO:${FOO}"
 
 deploy:
   - provider: script
