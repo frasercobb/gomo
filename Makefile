@@ -2,7 +2,7 @@ GOCMD=go
 
 .PHONY: lint
 lint:
-	GO111MODULE=off ${GOCMD} run github.com/golangci/golangci-lint/cmd/golangci-lint run
+	${GOCMD} run github.com/golangci/golangci-lint/cmd/golangci-lint run
 
 .PHONY: lint-fix
 lint-fix:
