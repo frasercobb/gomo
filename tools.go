@@ -1,3 +1,6 @@
+// +build tools
+
+// This file lists all go binary dependencies used by build scripts so that they are managed properly by go mod
 package main
 
 import (
