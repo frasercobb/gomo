@@ -6,4 +6,7 @@
 
 Interactive CLI to upgrade go module dependencies.
 
+![Screenshot](example_output.png)
+Upgrade colours: green(patch) & blue(minor)
+
 Currently a work in progress.
