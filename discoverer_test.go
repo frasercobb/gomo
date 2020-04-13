@@ -196,7 +196,7 @@ func Test_ParseModulesSkipsEmptyModuleLines(t *testing.T) {
 			ToVersion:   semver.MustParse("3.0.0"),
 		},
 	}
-	mockExecutor := MockExecutor{}
+	var mockExecutor MockExecutor
 	d := NewDiscoverer(
 		WithExecutor(&mockExecutor),
 	)
