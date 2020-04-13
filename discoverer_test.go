@@ -150,15 +150,16 @@ func Test_ParseModulesReturnsErrorWhenToVersionIsNotAValidSemver(t *testing.T) {
 func Test_ParseModulesReturnsExpectedModules(t *testing.T) {
 	wantModules := []Module{
 		{
-			Name:         "a-major-upgrade",
-			FromVersion:  semver.MustParse("1.0.0"),
-			ToVersion:    semver.MustParse("2.0.0"),
-			PatchUpgrade: false,
-		},
-		{
 			Name:         "a-minor-upgrade",
 			FromVersion:  semver.MustParse("1.0.0"),
 			ToVersion:    semver.MustParse("1.1.0"),
+			MinorUpgrade: true,
+		},
+		{
+			Name:         "a-minor-upgrade-with-patch-upgrade",
+			FromVersion:  semver.MustParse("1.0.0"),
+			ToVersion:    semver.MustParse("1.1.1"),
+			PatchUpgrade: false,
 			MinorUpgrade: true,
 		},
 		{
