@@ -220,11 +220,17 @@ func extractModule(moduleLine string, regex *regexp.Regexp) (Module, error) {
 		return Module{}, fmt.Errorf("parsing to version %q: %w", to, err)
 	}
 
-	return Module{
+	module := Module{
 		Name:         matches[1],
 		FromVersion:  from,
 		ToVersion:    to,
 		PatchUpgrade: to.Patch() > from.Patch(),
 		MinorUpgrade: to.Minor() > from.Minor(),
-	}, nil
+	}
+
+	if module.MinorUpgrade {
+		module.PatchUpgrade = false
+	}
+
+	return module, nil
 }
