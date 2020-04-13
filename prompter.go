@@ -35,11 +35,26 @@ func (p *Prompter) AskForUpgrades(modules []Module) ([]Module, error) {
 }
 
 func createSelectOptions(modules []Module) []string {
-	color.NoColor = false
+	color.NoColor = false //
+	var minorUpgrades []Module
+	var patchUpgrades []Module
+	for _, m := range modules {
+		if m.MinorUpgrade {
+			minorUpgrades = append(minorUpgrades, m)
+		}
+		if m.PatchUpgrade {
+			patchUpgrades = append(patchUpgrades, m)
+		}
+	}
+
 	var result []string
-	for _, mod := range modules {
+	for _, mod := range patchUpgrades {
 		result = append(result, moduleToSelectPrompt(mod))
 	}
+	for _, mod := range minorUpgrades {
+		result = append(result, moduleToSelectPrompt(mod))
+	}
+
 	return result
 }
 
