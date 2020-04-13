@@ -35,7 +35,7 @@ func (p *Prompter) AskForUpgrades(modules []Module) ([]Module, error) {
 }
 
 func createSelectOptions(modules []Module) []string {
-	color.NoColor = false //
+	color.NoColor = false // https://github.com/golang/go/issues/18153
 	var minorUpgrades []Module
 	var patchUpgrades []Module
 	for _, m := range modules {
