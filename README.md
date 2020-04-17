@@ -29,3 +29,8 @@ gomo
 Output will be coloured by update type:
 * Green indicates a patch update
 * Blue indicates a minor update
+
+## Other tools in this space
+
+* https://github.com/marwan-at-work/mod
+* https://github.com/oligot/go-mod-upgrade
