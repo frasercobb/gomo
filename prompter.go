@@ -23,7 +23,7 @@ func (p *Prompter) AskForUpgrades(modules []Module) ([]Module, error) {
 
 	var choices []int
 	if err := survey.AskOne(prompt, &choices); err != nil {
-		return nil, fmt.Errorf("unable to create upgrade prompt: %w", err)
+		return nil, fmt.Errorf("unable to get module choices: %w", err)
 	}
 
 	var modulesToUpgrade []Module

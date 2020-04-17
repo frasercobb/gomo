@@ -67,5 +67,5 @@ func Test_AskForUpgradesReturnsErrorWhenNoModulesGiven(t *testing.T) {
 
 	_, err := p.AskForUpgrades([]Module{})
 
-	assert.Contains(t, err.Error(), "unable to create upgrade prompt: ")
+	assert.Contains(t, err.Error(), "unable to get module choices: ")
 }
