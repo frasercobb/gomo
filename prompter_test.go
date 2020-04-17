@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_CreateSelectOptionsColoursPatch(t *testing.T) {
+func Test_CreateSelectOptions_ColoursPatch(t *testing.T) {
 	modules := []Module{
 		{
 			Name:         "frasercobb/gomo",
@@ -23,7 +23,7 @@ func Test_CreateSelectOptionsColoursPatch(t *testing.T) {
 	}, result)
 }
 
-func Test_CreateSelectOptionsColoursMinor(t *testing.T) {
+func Test_CreateSelectOptions_ColoursMinor(t *testing.T) {
 	modules := []Module{
 		{
 			Name:         "foo/bar",
@@ -39,7 +39,7 @@ func Test_CreateSelectOptionsColoursMinor(t *testing.T) {
 	}, result)
 }
 
-func Test_CreateSelectOptionsGroupsByUpgradeType(t *testing.T) {
+func Test_CreateSelectOptions_GroupsByUpgradeType(t *testing.T) {
 	modules := []Module{
 		{
 			Name:         "minor/upgrade",
@@ -62,7 +62,7 @@ func Test_CreateSelectOptionsGroupsByUpgradeType(t *testing.T) {
 	}, result)
 }
 
-func Test_AskForUpgradesReturnsErrorWhenNoModulesGiven(t *testing.T) {
+func Test_AskForUpgrades_ReturnsErrorWhenNoModulesGiven(t *testing.T) {
 	p := NewPrompter()
 
 	_, err := p.AskForUpgrades([]Module{})

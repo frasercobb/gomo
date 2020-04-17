@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_ListModulesCallsExecutorRun(t *testing.T) {
+func Test_ListModules_CallsExecutorRun(t *testing.T) {
 	mockExecutor := &MockExecutor{}
 	d := NewDiscoverer(
 		WithExecutor(mockExecutor),
@@ -30,7 +30,7 @@ func Test_ListModulesCallsExecutorRun(t *testing.T) {
 	})
 }
 
-func Test_ListModulesReturnsErrorFromExecutor(t *testing.T) {
+func Test_ListModules_ReturnsErrorFromExecutor(t *testing.T) {
 	wantError := fmt.Errorf("an-error-from-executor")
 	mockExecutor := MockExecutor{RunError: wantError}
 	d := NewDiscoverer(
@@ -42,7 +42,7 @@ func Test_ListModulesReturnsErrorFromExecutor(t *testing.T) {
 	assert.Error(t, wantError, err)
 }
 
-func Test_ListModulesReturnsModules(t *testing.T) {
+func Test_ListModules_ReturnsModules(t *testing.T) {
 	moduleName := "a-module-name"
 	wantModules := []Module{
 		{
@@ -65,7 +65,7 @@ func Test_ListModulesReturnsModules(t *testing.T) {
 	assert.Equal(t, modulesListOutput, moduleOutput)
 }
 
-func Test_ListModulesHandlesLatestModules(t *testing.T) {
+func Test_ListModules_HandlesLatestModules(t *testing.T) {
 	commandOutput := []string{
 		"go: finding golang.org/x/sync latest",
 		"go: finding golang.org/x/net latest",
@@ -87,7 +87,7 @@ func Test_ListModulesHandlesLatestModules(t *testing.T) {
 	assert.Equal(t, result, moduleOutput)
 }
 
-func Test_ParseModulesReturnsErrorWhenInvalidModuleRegex(t *testing.T) {
+func Test_ParseModules_ReturnsErrorWhenInvalidModuleRegex(t *testing.T) {
 	mockExecutor := MockExecutor{}
 	d := NewDiscoverer(
 		WithExecutor(&mockExecutor),
@@ -100,7 +100,7 @@ func Test_ParseModulesReturnsErrorWhenInvalidModuleRegex(t *testing.T) {
 	assert.Contains(t, err.Error(), "error parsing regexp")
 }
 
-func Test_ParseModulesReturnsErrorWhenNotAllMatched(t *testing.T) {
+func Test_ParseModules_ReturnsErrorWhenNotAllMatched(t *testing.T) {
 	output := "===START===example.com/a/module,1.0.0===END==="
 	mockExecutor := MockExecutor{}
 	d := NewDiscoverer(
@@ -113,7 +113,7 @@ func Test_ParseModulesReturnsErrorWhenNotAllMatched(t *testing.T) {
 	assert.Contains(t, err.Error(), "regex was not able to find all matches")
 }
 
-func Test_ParseModulesReturnsErrorWhenFromVersionIsNotAValidSemver(t *testing.T) {
+func Test_ParseModules_ReturnsErrorWhenFromVersionIsNotAValidSemver(t *testing.T) {
 	wantModule := Module{
 		Name:      "a-module-name",
 		ToVersion: semver.MustParse("1.0.0"),
@@ -130,7 +130,7 @@ func Test_ParseModulesReturnsErrorWhenFromVersionIsNotAValidSemver(t *testing.T)
 	assert.Contains(t, err.Error(), fmt.Sprintf("parsing from version %q:", wantModule.FromVersion))
 }
 
-func Test_ParseModulesReturnsErrorWhenToVersionIsNotAValidSemver(t *testing.T) {
+func Test_ParseModules_ReturnsErrorWhenToVersionIsNotAValidSemver(t *testing.T) {
 	wantModule := Module{
 		Name:        "a-module-name",
 		FromVersion: semver.MustParse("1.0.0"),
@@ -147,7 +147,7 @@ func Test_ParseModulesReturnsErrorWhenToVersionIsNotAValidSemver(t *testing.T) {
 	assert.Contains(t, err.Error(), fmt.Sprintf("parsing to version %q:", wantModule.ToVersion))
 }
 
-func Test_ParseModulesReturnsExpectedModules(t *testing.T) {
+func Test_ParseModules_ReturnsExpectedModules(t *testing.T) {
 	wantModules := []Module{
 		{
 			Name:         "a-minor-upgrade",
@@ -182,7 +182,7 @@ func Test_ParseModulesReturnsExpectedModules(t *testing.T) {
 	assert.Equal(t, wantModules, modules)
 }
 
-func Test_ParseModulesSkipsEmptyModuleLines(t *testing.T) {
+func Test_ParseModules_SkipsEmptyModuleLines(t *testing.T) {
 	wantModules := []Module{
 		{
 			Name:         "a-module-name",
@@ -214,7 +214,7 @@ func Test_ParseModulesSkipsEmptyModuleLines(t *testing.T) {
 	assert.Equal(t, wantModules, modules)
 }
 
-func Test_GetChangelogCallsGivenHttpClient(t *testing.T) {
+func Test_GetChangelog__CallsGivenHttpClient(t *testing.T) {
 	name := "github.com/stretchr/testify"
 	given := Module{
 		Name: name,
@@ -231,7 +231,7 @@ func Test_GetChangelogCallsGivenHttpClient(t *testing.T) {
 	assert.Len(t, calls, 1)
 }
 
-func Test_GetGithubRepoFromModule(t *testing.T) {
+func Test_GetGithubRepoFromModule_ReturnsExpectedModule(t *testing.T) {
 	wantRepo := "a-project/a-wantRepo-name"
 	m := Module{
 		Name: fmt.Sprintf("github.com/%s", wantRepo),
@@ -242,7 +242,7 @@ func Test_GetGithubRepoFromModule(t *testing.T) {
 	assert.Equal(t, wantRepo, gotRepo)
 }
 
-func Test_GetChangelogCallsHttpClientWithExpectedQueryParams(t *testing.T) {
+func Test_GetChangelog__CallsHttpClientWithExpectedQueryParams(t *testing.T) {
 	repo := "stretchr/testify"
 	name := fmt.Sprintf("github.com/%s", repo)
 	given := Module{
@@ -269,7 +269,7 @@ func Test_GetChangelogCallsHttpClientWithExpectedQueryParams(t *testing.T) {
 	assert.Contains(t, queryParams, wantSearch)
 }
 
-func Test_GetChangelogReturnsErrorFromClient(t *testing.T) {
+func Test_GetChangelog_ReturnsErrorFromClient(t *testing.T) {
 	given := Module{
 		Name:         "github.com/stretchr/testify",
 		PatchUpgrade: false,
@@ -289,7 +289,7 @@ func Test_GetChangelogReturnsErrorFromClient(t *testing.T) {
 	assert.EqualError(t, err, fmt.Sprintf("failed to make a request for changelog: %s", wantError))
 }
 
-func Test_GetChangelogReturnsMatchingErrorWhenCannotParseModuleName(t *testing.T) {
+func Test_GetChangelog_ReturnsMatchingErrorWhenCannotParseModuleName(t *testing.T) {
 	d := NewDiscoverer()
 
 	_, err := d.GetChangelog(Module{Name: "not-a-valid-module-name"})
@@ -297,7 +297,7 @@ func Test_GetChangelogReturnsMatchingErrorWhenCannotParseModuleName(t *testing.T
 
 	assert.Contains(t, err.Error(), "unable to parse module name")
 }
-func Test_GetChangelogReturnsUnmarshallingErrorWhenResponseInvalid(t *testing.T) {
+func Test_GetChangelog_ReturnsUnmarshallingErrorWhenResponseInvalid(t *testing.T) {
 	mockClient := NewMockHTTPClient()
 	mockClient.GivenResponseIsReturned(200, "not-valid-json", nil)
 	d := NewDiscoverer(
@@ -312,7 +312,7 @@ func Test_GetChangelogReturnsUnmarshallingErrorWhenResponseInvalid(t *testing.T)
 	assert.Contains(t, err.Error(), "unexpected response from github API:")
 }
 
-func Test_GetChangelogReturnsExpectedURL(t *testing.T) {
+func Test_GetChangelog_ReturnsExpectedURL(t *testing.T) {
 	module := newValidModule()
 	wantURL := "url"
 	githubResponse := GithubFileSearchResponse{
@@ -342,7 +342,7 @@ func newValidModule() Module {
 	}
 }
 
-func Test_ReturnsRootChangelogIfMultipleFound(t *testing.T) {
+func Test_GetChangelog_ReturnsRootChangelogIfMultipleFound(t *testing.T) {
 	githubResponse := GithubFileSearchResponse{
 		TotalCount: 2,
 		Items: []Item{
@@ -365,7 +365,7 @@ func Test_ReturnsRootChangelogIfMultipleFound(t *testing.T) {
 	assert.Equal(t, githubResponse.Items[1].HTMLURL, changelog)
 }
 
-func Test_GetChangelogReturnsErrorWhenChangelogIsNotFound(t *testing.T) {
+func Test_GetChangelog_ReturnsErrorWhenChangelogIsNotFound(t *testing.T) {
 	githubResponse := GithubFileSearchResponse{
 		TotalCount: 1,
 		Items: []Item{
@@ -387,7 +387,7 @@ func Test_GetChangelogReturnsErrorWhenChangelogIsNotFound(t *testing.T) {
 	assert.Contains(t, err.Error(), "failed to find a root level CHANGELOG.md")
 }
 
-func Test_GetChangelogReturnsErrorWhenNoSearchResultsFound(t *testing.T) {
+func Test_GetChangelog_ReturnsErrorWhenNoSearchResultsFound(t *testing.T) {
 	githubResponse := GithubFileSearchResponse{
 		TotalCount: 0,
 		Items:      []Item{},
