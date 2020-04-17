@@ -11,6 +11,32 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func Test_GetModules_ReturnsErrorFromListModules(t *testing.T) {
+	mockExecutor := MockExecutor{RunError: fmt.Errorf("an-error-from-executor")}
+	d := NewDiscoverer(
+		WithExecutor(&mockExecutor),
+	)
+
+	_, err := d.GetModules()
+	require.Error(t, err)
+
+	assert.Contains(t, err.Error(), "listing modules: ")
+}
+
+func Test_GetModules_ReturnsErrorFromParseModules(t *testing.T) {
+	mockExecutor := MockExecutor{
+		CommandOutput: "invalid-output",
+	}
+	d := NewDiscoverer(
+		WithExecutor(&mockExecutor),
+	)
+
+	_, err := d.GetModules()
+	require.Error(t, err)
+
+	assert.Contains(t, err.Error(), "parsing modules: ")
+}
+
 func Test_ListModules_CallsExecutorRun(t *testing.T) {
 	mockExecutor := &MockExecutor{}
 	d := NewDiscoverer(
