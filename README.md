@@ -8,8 +8,6 @@ Interactive CLI to upgrade go module dependencies.
 
 ![Screenshot](example_output.png)
 
-Currently a work in progress.
-
 ## Installation
 
 Binaries for OS X and Linux are available on the [releases page](https://github.com/frasercobb/gomo/releases).
@@ -29,3 +27,12 @@ gomo
 Output will be coloured by update type:
 * Green indicates a patch update
 * Blue indicates a minor update
+
+## Status
+
+Currently a work in progress. Open to issues and pull requests.
+
+## Other tools in this space
+
+* https://github.com/marwan-at-work/mod
+* https://github.com/oligot/go-mod-upgrade
