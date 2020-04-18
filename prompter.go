@@ -4,13 +4,30 @@ import (
 	"fmt"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/fatih/color"
 )
 
-type Prompter struct{}
+type Prompter struct {
+	stdio terminal.Stdio
+}
 
-func NewPrompter() *Prompter {
-	return &Prompter{}
+type PrompterOption func(*Prompter)
+
+func NewPrompter(options ...PrompterOption) *Prompter {
+	p := &Prompter{}
+
+	for _, option := range options {
+		option(p)
+	}
+
+	return p
+}
+
+func WithStdio(stdio terminal.Stdio) PrompterOption {
+	return func(p *Prompter) {
+		p.stdio = stdio
+	}
 }
 
 func (p *Prompter) AskForUpgrades(modules []Module) ([]Module, error) {
@@ -22,7 +39,7 @@ func (p *Prompter) AskForUpgrades(modules []Module) ([]Module, error) {
 	}
 
 	var choices []int
-	if err := survey.AskOne(prompt, &choices); err != nil {
+	if err := survey.AskOne(prompt, &choices, survey.WithStdio(p.stdio.In, p.stdio.Out, p.stdio.Err)); err != nil {
 		return nil, fmt.Errorf("unable to get module choices: %w", err)
 	}
 

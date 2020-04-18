@@ -1,10 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"testing"
+	"time"
 
+	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/Masterminds/semver/v3"
+	"github.com/Netflix/go-expect"
+	"github.com/hinshun/vt10x"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_CreateSelectOptions_ColoursPatch(t *testing.T) {
@@ -68,4 +74,47 @@ func Test_AskForUpgrades_ReturnsErrorWhenNoModulesGiven(t *testing.T) {
 	_, err := p.AskForUpgrades([]Module{})
 
 	assert.Contains(t, err.Error(), "unable to get module choices: ")
+}
+
+func Test_AskForUpgrades_CanSelectAModule(t *testing.T) {
+	buf := new(bytes.Buffer)
+	c, _, err := vt10x.NewVT10XConsole(expect.WithStdout(buf), expect.WithDefaultTimeout(1*time.Second))
+	require.Nil(t, err)
+	defer c.Close()
+
+	stdio := terminal.Stdio{Out: c.Tty(), In: c.Tty(), Err: c.Tty()}
+
+	donec := make(chan struct{})
+	go func() {
+		defer close(donec)
+		_, err := c.ExpectString("Which modules do you want to upgrade?")
+		assert.NoError(t, err)
+		_, err = c.Send(string(terminal.KeyArrowDown))
+		assert.NoError(t, err)
+		_, err = c.SendLine(" ")
+		assert.NoError(t, err)
+		_, err = c.ExpectEOF()
+		assert.NoError(t, err)
+	}()
+
+	p := NewPrompter(
+		WithStdio(stdio),
+	)
+
+	modules := []Module{
+		{
+			Name:         "minor/upgrade",
+			FromVersion:  semver.MustParse("0.1.1"),
+			ToVersion:    semver.MustParse("0.2.1"),
+			MinorUpgrade: true,
+		},
+	}
+	gotModules, err := p.AskForUpgrades(modules)
+	require.NoError(t, err)
+
+	c.Tty().Close()
+	<-donec
+
+	assert.Len(t, gotModules, 1)
+	assert.Contains(t, gotModules, modules[0])
 }
