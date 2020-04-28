@@ -13,5 +13,6 @@ require (
 	github.com/mattn/go-isatty v0.0.11 // indirect
 	github.com/ogier/pflag v0.0.1 // indirect
 	github.com/stretchr/testify v1.5.1
+	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	gotest.tools/gotestsum v0.4.1
 )

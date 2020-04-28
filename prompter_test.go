@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"testing"
 	"time"
 
@@ -77,30 +76,6 @@ func Test_AskForUpgrades_ReturnsErrorWhenNoModulesGiven(t *testing.T) {
 }
 
 func Test_AskForUpgrades_CanSelectAModule(t *testing.T) {
-	buf := new(bytes.Buffer)
-	c, _, err := vt10x.NewVT10XConsole(expect.WithStdout(buf), expect.WithDefaultTimeout(1*time.Second))
-	require.Nil(t, err)
-	defer c.Close()
-
-	stdio := terminal.Stdio{Out: c.Tty(), In: c.Tty(), Err: c.Tty()}
-
-	donec := make(chan struct{})
-	go func() {
-		defer close(donec)
-		_, err := c.ExpectString("Which modules do you want to upgrade?")
-		assert.NoError(t, err)
-		_, err = c.Send(string(terminal.KeyArrowDown))
-		assert.NoError(t, err)
-		_, err = c.SendLine(" ")
-		assert.NoError(t, err)
-		_, err = c.ExpectEOF()
-		assert.NoError(t, err)
-	}()
-
-	p := NewPrompter(
-		WithStdio(stdio),
-	)
-
 	modules := []Module{
 		{
 			Name:         "minor/upgrade",
@@ -109,12 +84,47 @@ func Test_AskForUpgrades_CanSelectAModule(t *testing.T) {
 			MinorUpgrade: true,
 		},
 	}
-	gotModules, err := p.AskForUpgrades(modules)
+	sendInputs := func(c *expect.Console) {
+		_, _ = c.ExpectString("Which modules do you want to upgrade?")
+		_, _ = c.Send(string(terminal.KeyArrowDown))
+		_, _ = c.SendLine(" ")
+		_, _ = c.ExpectEOF()
+	}
+	gotModules, err := RunPrompterCLITest(t, modules, sendInputs)
 	require.NoError(t, err)
-
-	c.Tty().Close()
-	<-donec
 
 	assert.Len(t, gotModules, 1)
 	assert.Contains(t, gotModules, modules[0])
+}
+
+func RunPrompterCLITest(t *testing.T, given []Module, sendInputs func(*expect.Console)) ([]Module, error) {
+	c, _, err := vt10x.NewVT10XConsole(expect.WithDefaultTimeout(100 * time.Millisecond))
+	require.Nil(t, err)
+	defer c.Close()
+	defer c.Tty().Close()
+
+	stdio := terminal.Stdio{Out: c.Tty(), In: c.Tty(), Err: c.Tty()}
+	p := NewPrompter(WithStdio(stdio))
+
+	errCh := make(chan error)
+	go sendInputs(c)
+
+	modulesCh := make(chan []Module)
+	go func() {
+		gotModules, err := p.AskForUpgrades(given)
+		if err != nil {
+			errCh <- err
+		}
+		modulesCh <- gotModules
+	}()
+
+	select {
+	case gotModules := <-modulesCh:
+		return gotModules, nil
+	case err := <-errCh:
+		return nil, err
+	case <-time.After(1 * time.Second):
+		t.Fatalf("timeout during prompter CLI test")
+		return nil, nil
+	}
 }
