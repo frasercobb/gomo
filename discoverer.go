@@ -50,15 +50,15 @@ type Item struct {
 	HTMLURL string `json:"html_url"`
 }
 
-func NewDiscoverer(options ...DiscovererOption) *Discoverer {
+func NewDiscoverer(executor Executor, httpClient HTTPClient, options ...DiscovererOption) *Discoverer {
 	d := &Discoverer{
-		Executor:    nil,
+		Executor:    executor,
 		ModuleRegex: "==START==(.+),(.+),(.+)==END==",
 		ListCommand: "go",
 		ListCommandArgs: []string{
 			"list", "-m", "-u", "-f", template, "all",
 		},
-		HTTPClient: nil,
+		HTTPClient: httpClient,
 	}
 
 	for _, option := range options {

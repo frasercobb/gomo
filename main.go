@@ -17,10 +17,7 @@ func run() error {
 	client := http.Client{
 		Timeout: 2 * time.Second,
 	}
-	d := NewDiscoverer(
-		WithExecutor(cmdExecutor),
-		WithHTTPClient(&client),
-	)
+	d := NewDiscoverer(cmdExecutor, &client)
 
 	modules, err := d.GetModules()
 	if err != nil {

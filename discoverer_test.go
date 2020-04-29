@@ -13,9 +13,7 @@ import (
 
 func Test_GetModules_ReturnsErrorFromListModules(t *testing.T) {
 	mockExecutor := MockExecutor{RunError: fmt.Errorf("an-error-from-executor")}
-	d := NewDiscoverer(
-		WithExecutor(&mockExecutor),
-	)
+	d := NewDiscoverer(&mockExecutor, &MockHTTPClient{})
 
 	_, err := d.GetModules()
 	require.Error(t, err)
@@ -27,9 +25,7 @@ func Test_GetModules_ReturnsErrorFromParseModules(t *testing.T) {
 	mockExecutor := MockExecutor{
 		CommandOutput: "invalid-output",
 	}
-	d := NewDiscoverer(
-		WithExecutor(&mockExecutor),
-	)
+	d := NewDiscoverer(&mockExecutor, &MockHTTPClient{})
 
 	_, err := d.GetModules()
 	require.Error(t, err)
@@ -38,10 +34,8 @@ func Test_GetModules_ReturnsErrorFromParseModules(t *testing.T) {
 }
 
 func Test_ListModules_CallsExecutorRun(t *testing.T) {
-	mockExecutor := &MockExecutor{}
-	d := NewDiscoverer(
-		WithExecutor(mockExecutor),
-	)
+	mockExecutor := MockExecutor{}
+	d := NewDiscoverer(&mockExecutor, &MockHTTPClient{})
 
 	_, err := d.listModules()
 	require.NoError(t, err)
@@ -59,9 +53,7 @@ func Test_ListModules_CallsExecutorRun(t *testing.T) {
 func Test_ListModules_ReturnsErrorFromExecutor(t *testing.T) {
 	wantError := fmt.Errorf("an-error-from-executor")
 	mockExecutor := MockExecutor{RunError: wantError}
-	d := NewDiscoverer(
-		WithExecutor(&mockExecutor),
-	)
+	d := NewDiscoverer(&mockExecutor, &MockHTTPClient{})
 
 	_, err := d.listModules()
 
@@ -81,9 +73,7 @@ func Test_ListModules_ReturnsModules(t *testing.T) {
 		CommandOutput: modulesListOutput,
 	}
 
-	d := NewDiscoverer(
-		WithExecutor(&mockExecutor),
-	)
+	d := NewDiscoverer(&mockExecutor, &MockHTTPClient{})
 
 	moduleOutput, err := d.listModules()
 	require.NoError(t, err)
@@ -103,9 +93,7 @@ func Test_ListModules_HandlesLatestModules(t *testing.T) {
 		CommandOutput: result,
 	}
 
-	d := NewDiscoverer(
-		WithExecutor(&mockExecutor),
-	)
+	d := NewDiscoverer(&mockExecutor, &MockHTTPClient{})
 
 	moduleOutput, err := d.listModules()
 	require.NoError(t, err)
@@ -115,9 +103,7 @@ func Test_ListModules_HandlesLatestModules(t *testing.T) {
 
 func Test_ParseModules_ReturnsErrorWhenInvalidModuleRegex(t *testing.T) {
 	mockExecutor := MockExecutor{}
-	d := NewDiscoverer(
-		WithExecutor(&mockExecutor),
-	)
+	d := NewDiscoverer(&mockExecutor, &MockHTTPClient{})
 	d.ModuleRegex = "not a valid regex ("
 
 	_, err := d.parseModules("")
@@ -129,9 +115,7 @@ func Test_ParseModules_ReturnsErrorWhenInvalidModuleRegex(t *testing.T) {
 func Test_ParseModules_ReturnsErrorWhenNotAllMatched(t *testing.T) {
 	output := "===START===example.com/a/module,1.0.0===END==="
 	mockExecutor := MockExecutor{}
-	d := NewDiscoverer(
-		WithExecutor(&mockExecutor),
-	)
+	d := NewDiscoverer(&mockExecutor, &MockHTTPClient{})
 
 	_, err := d.parseModules(output)
 	require.Error(t, err)
@@ -146,9 +130,7 @@ func Test_ParseModules_ReturnsErrorWhenFromVersionIsNotAValidSemver(t *testing.T
 	}
 	output := moduleToListFormat(wantModule)
 	mockExecutor := MockExecutor{}
-	d := NewDiscoverer(
-		WithExecutor(&mockExecutor),
-	)
+	d := NewDiscoverer(&mockExecutor, &MockHTTPClient{})
 
 	_, err := d.parseModules(output)
 	require.Error(t, err)
@@ -163,9 +145,7 @@ func Test_ParseModules_ReturnsErrorWhenToVersionIsNotAValidSemver(t *testing.T) 
 	}
 	output := moduleToListFormat(wantModule)
 	mockExecutor := MockExecutor{}
-	d := NewDiscoverer(
-		WithExecutor(&mockExecutor),
-	)
+	d := NewDiscoverer(&mockExecutor, &MockHTTPClient{})
 
 	_, err := d.parseModules(output)
 	require.Error(t, err)
@@ -197,9 +177,7 @@ func Test_ParseModules_ReturnsExpectedModules(t *testing.T) {
 		},
 	}
 	mockExecutor := MockExecutor{}
-	d := NewDiscoverer(
-		WithExecutor(&mockExecutor),
-	)
+	d := NewDiscoverer(&mockExecutor, &MockHTTPClient{})
 	moduleListOutput := modulesToListFormat(wantModules...)
 	modules, err := d.parseModules(moduleListOutput)
 	require.NoError(t, err)
@@ -223,9 +201,7 @@ func Test_ParseModules_SkipsEmptyModuleLines(t *testing.T) {
 		},
 	}
 	var mockExecutor MockExecutor
-	d := NewDiscoverer(
-		WithExecutor(&mockExecutor),
-	)
+	d := NewDiscoverer(&mockExecutor, &MockHTTPClient{})
 
 	var moduleListWithEmptyLines []string
 	moduleListWithEmptyLines = append(moduleListWithEmptyLines, "")
@@ -247,9 +223,7 @@ func Test_GetChangelog__CallsGivenHttpClient(t *testing.T) {
 	}
 
 	mockClient := NewMockHTTPClient()
-	d := NewDiscoverer(
-		WithHTTPClient(mockClient),
-	)
+	d := NewDiscoverer(&MockExecutor{}, mockClient)
 
 	_, _ = d.GetChangelog(given)
 
@@ -278,9 +252,7 @@ func Test_GetChangelog__CallsHttpClientWithExpectedQueryParams(t *testing.T) {
 	}
 
 	mockClient := NewMockHTTPClient()
-	d := NewDiscoverer(
-		WithHTTPClient(mockClient),
-	)
+	d := NewDiscoverer(&MockExecutor{}, mockClient)
 
 	_, _ = d.GetChangelog(given)
 
@@ -305,9 +277,7 @@ func Test_GetChangelog_ReturnsErrorFromClient(t *testing.T) {
 	mockClient := NewMockHTTPClient()
 	wantError := fmt.Errorf("an error from the HTTP Client")
 	mockClient.GivenErrorIsReturned(wantError)
-	d := NewDiscoverer(
-		WithHTTPClient(mockClient),
-	)
+	d := NewDiscoverer(&MockExecutor{}, mockClient)
 
 	_, err := d.GetChangelog(given)
 	require.Error(t, err)
@@ -316,7 +286,7 @@ func Test_GetChangelog_ReturnsErrorFromClient(t *testing.T) {
 }
 
 func Test_GetChangelog_ReturnsMatchingErrorWhenCannotParseModuleName(t *testing.T) {
-	d := NewDiscoverer()
+	d := NewDiscoverer(&MockExecutor{}, &MockHTTPClient{})
 
 	_, err := d.GetChangelog(Module{Name: "not-a-valid-module-name"})
 	require.Error(t, err)
@@ -326,9 +296,7 @@ func Test_GetChangelog_ReturnsMatchingErrorWhenCannotParseModuleName(t *testing.
 func Test_GetChangelog_ReturnsUnmarshallingErrorWhenResponseInvalid(t *testing.T) {
 	mockClient := NewMockHTTPClient()
 	mockClient.GivenResponseIsReturned(200, "not-valid-json", nil)
-	d := NewDiscoverer(
-		WithHTTPClient(mockClient),
-	)
+	d := NewDiscoverer(&MockExecutor{}, mockClient)
 
 	_, err := d.GetChangelog(Module{
 		Name: "github.com/foo/bar",
@@ -352,9 +320,7 @@ func Test_GetChangelog_ReturnsExpectedURL(t *testing.T) {
 
 	mockClient := NewMockHTTPClient()
 	mockClient.GivenResponseIsReturned(200, string(body), nil)
-	d := NewDiscoverer(
-		WithHTTPClient(mockClient),
-	)
+	d := NewDiscoverer(&MockExecutor{}, mockClient)
 
 	gotChangelog, err := d.GetChangelog(module)
 	require.NoError(t, err)
@@ -381,9 +347,7 @@ func Test_GetChangelog_ReturnsRootChangelogIfMultipleFound(t *testing.T) {
 
 	mockClient := NewMockHTTPClient()
 	mockClient.GivenResponseIsReturned(200, string(body), nil)
-	d := NewDiscoverer(
-		WithHTTPClient(mockClient),
-	)
+	d := NewDiscoverer(&MockExecutor{}, mockClient)
 
 	changelog, err := d.GetChangelog(newValidModule())
 	require.NoError(t, err)
@@ -403,9 +367,7 @@ func Test_GetChangelog_ReturnsErrorWhenChangelogIsNotFound(t *testing.T) {
 
 	mockClient := NewMockHTTPClient()
 	mockClient.GivenResponseIsReturned(200, string(body), nil)
-	d := NewDiscoverer(
-		WithHTTPClient(mockClient),
-	)
+	d := NewDiscoverer(&MockExecutor{}, mockClient)
 
 	_, err = d.GetChangelog(newValidModule())
 	require.Error(t, err)
@@ -423,9 +385,7 @@ func Test_GetChangelog_ReturnsErrorWhenNoSearchResultsFound(t *testing.T) {
 
 	mockClient := NewMockHTTPClient()
 	mockClient.GivenResponseIsReturned(200, string(body), nil)
-	d := NewDiscoverer(
-		WithHTTPClient(mockClient),
-	)
+	d := NewDiscoverer(&MockExecutor{}, mockClient)
 
 	_, err = d.GetChangelog(newValidModule())
 	require.Error(t, err)
