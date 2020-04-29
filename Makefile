@@ -30,3 +30,7 @@ testsum:
 .PHONY: build
 build:
 	${GOCMD} build -o ./build-output/gomo
+
+.PHONY: run
+run:
+	${GOCMD} run .
