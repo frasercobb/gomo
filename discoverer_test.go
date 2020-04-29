@@ -104,7 +104,7 @@ func Test_ListModules_HandlesLatestModules(t *testing.T) {
 func Test_ParseModules_ReturnsErrorWhenInvalidModuleRegex(t *testing.T) {
 	mockExecutor := MockExecutor{}
 	d := NewDiscoverer(&mockExecutor, &MockHTTPClient{})
-	d.ModuleRegex = "not a valid regex ("
+	d.moduleRegex = "not a valid regex ("
 
 	_, err := d.parseModules("")
 	require.Error(t, err)

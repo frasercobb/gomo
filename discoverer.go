@@ -24,11 +24,11 @@ type HTTPClient interface {
 }
 
 type Discoverer struct {
-	Executor        Executor
-	HTTPClient      HTTPClient
-	ModuleRegex     string
-	ListCommand     string
-	ListCommandArgs []string
+	executor        Executor
+	httpClient      HTTPClient
+	moduleRegex     string
+	listCommand     string
+	listCommandArgs []string
 }
 
 const (
@@ -52,13 +52,13 @@ type Item struct {
 
 func NewDiscoverer(executor Executor, httpClient HTTPClient, options ...DiscovererOption) *Discoverer {
 	d := &Discoverer{
-		Executor:    executor,
-		ModuleRegex: "==START==(.+),(.+),(.+)==END==",
-		ListCommand: "go",
-		ListCommandArgs: []string{
+		executor:    executor,
+		moduleRegex: "==START==(.+),(.+),(.+)==END==",
+		listCommand: "go",
+		listCommandArgs: []string{
 			"list", "-m", "-u", "-f", template, "all",
 		},
-		HTTPClient: httpClient,
+		httpClient: httpClient,
 	}
 
 	for _, option := range options {
@@ -70,13 +70,13 @@ func NewDiscoverer(executor Executor, httpClient HTTPClient, options ...Discover
 
 func WithExecutor(executor Executor) DiscovererOption {
 	return func(d *Discoverer) {
-		d.Executor = executor
+		d.executor = executor
 	}
 }
 
 func WithHTTPClient(client HTTPClient) DiscovererOption {
 	return func(d *Discoverer) {
-		d.HTTPClient = client
+		d.httpClient = client
 	}
 }
 
@@ -130,7 +130,7 @@ func (d *Discoverer) searchGithubForChangelog(module Module) (*GithubFileSearchR
 		Path:     "/search/code",
 		RawQuery: fmt.Sprintf("q=repo:%s%sfilename:CHANGELOG.md", repo, "+"),
 	}
-	res, err := d.HTTPClient.Do(&http.Request{
+	res, err := d.httpClient.Do(&http.Request{
 		URL: u,
 	})
 	if err != nil {
@@ -163,15 +163,15 @@ func getGithubRepoFromModule(module Module) (string, error) {
 }
 
 func (d *Discoverer) listModules() (string, error) {
-	output, err := d.Executor.Run(d.ListCommand, d.ListCommandArgs...)
+	output, err := d.executor.Run(d.listCommand, d.listCommandArgs...)
 	if err != nil {
-		return "", fmt.Errorf("running '%s %s': %w", d.ListCommand, d.ListCommandArgs, err)
+		return "", fmt.Errorf("running '%s %s': %w", d.listCommand, d.listCommandArgs, err)
 	}
 	return output, nil
 }
 
 func (d *Discoverer) parseModules(listOutput string) ([]Module, error) {
-	re, err := regexp.Compile(d.ModuleRegex)
+	re, err := regexp.Compile(d.moduleRegex)
 	if err != nil {
 		return nil, err
 	}
