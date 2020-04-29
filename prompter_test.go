@@ -84,11 +84,12 @@ func Test_AskForUpgrades_CanSelectAModule(t *testing.T) {
 			MinorUpgrade: true,
 		},
 	}
-	sendInputs := func(c *expect.Console) {
+	sendInputs := func(c *expect.Console) error {
 		_, _ = c.ExpectString("Which modules do you want to upgrade?")
 		_, _ = c.Send(string(terminal.KeyArrowDown))
 		_, _ = c.SendLine(" ")
 		_, _ = c.ExpectEOF()
+		return nil
 	}
 	gotModules, err := RunPrompterCLITest(t, modules, sendInputs)
 	require.NoError(t, err)
@@ -97,9 +98,9 @@ func Test_AskForUpgrades_CanSelectAModule(t *testing.T) {
 	assert.Contains(t, gotModules, modules[0])
 }
 
-func RunPrompterCLITest(t *testing.T, given []Module, sendInputs func(*expect.Console)) ([]Module, error) {
+func RunPrompterCLITest(t *testing.T, given []Module, sendInputs func(*expect.Console) error) ([]Module, error) {
 	c, _, err := vt10x.NewVT10XConsole(expect.WithDefaultTimeout(100 * time.Millisecond))
-	require.Nil(t, err)
+	require.NoError(t, err)
 	defer c.Close()
 	defer c.Tty().Close()
 
@@ -107,7 +108,12 @@ func RunPrompterCLITest(t *testing.T, given []Module, sendInputs func(*expect.Co
 	p := NewPrompter(WithStdio(stdio))
 
 	errCh := make(chan error)
-	go sendInputs(c)
+	go func() {
+		err := sendInputs(c)
+		if err != nil {
+			errCh <- err
+		}
+	}()
 
 	modulesCh := make(chan []Module)
 	go func() {
