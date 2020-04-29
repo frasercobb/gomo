@@ -29,4 +29,4 @@ testsum:
 
 .PHONY: build
 build:
-	${GOCMD} build -o gomo
+	${GOCMD} build -o ./build-output/gomo

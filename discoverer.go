@@ -68,15 +68,9 @@ func NewDiscoverer(executor Executor, httpClient HTTPClient, options ...Discover
 	return d
 }
 
-func WithExecutor(executor Executor) DiscovererOption {
+func WithModuleRegex(regex string) DiscovererOption {
 	return func(d *Discoverer) {
-		d.executor = executor
-	}
-}
-
-func WithHTTPClient(client HTTPClient) DiscovererOption {
-	return func(d *Discoverer) {
-		d.httpClient = client
+		d.moduleRegex = regex
 	}
 }
 
