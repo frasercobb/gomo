@@ -11,12 +11,29 @@ import (
 	"github.com/Masterminds/semver/v3"
 )
 
+const (
+	MajorUpgrade = "major"
+	MinorUpgrade = "minor"
+	PatchUpgrade = "patch"
+)
+
 type Module struct {
-	Name         string
-	FromVersion  *semver.Version
-	ToVersion    *semver.Version
-	PatchUpgrade bool
-	MinorUpgrade bool
+	Name        string
+	FromVersion *semver.Version
+	ToVersion   *semver.Version
+	UpgradeType string
+}
+
+func (m *Module) isMajorUpgrade() bool {
+	return m.UpgradeType == MajorUpgrade
+}
+
+func (m *Module) isMinorUpgrade() bool {
+	return m.UpgradeType == MinorUpgrade
+}
+
+func (m *Module) isPatchUpgrade() bool {
+	return m.UpgradeType == PatchUpgrade
 }
 
 type HTTPClient interface {
@@ -215,15 +232,21 @@ func extractModule(moduleLine string, regex *regexp.Regexp) (Module, error) {
 	}
 
 	module := Module{
-		Name:         matches[1],
-		FromVersion:  from,
-		ToVersion:    to,
-		PatchUpgrade: to.Patch() > from.Patch(),
-		MinorUpgrade: to.Minor() > from.Minor(),
+		Name:        matches[1],
+		FromVersion: from,
+		ToVersion:   to,
 	}
 
-	if module.MinorUpgrade {
-		module.PatchUpgrade = false
+	if to.Patch() > from.Patch() {
+		module.UpgradeType = PatchUpgrade
+	}
+
+	if to.Minor() > from.Minor() {
+		module.UpgradeType = MinorUpgrade
+	}
+
+	if to.Major() > from.Major() {
+		module.UpgradeType = MajorUpgrade
 	}
 
 	return module, nil

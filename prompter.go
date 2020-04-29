@@ -39,10 +39,10 @@ func createSelectOptions(modules []Module) []string {
 	var minorUpgrades []Module
 	var patchUpgrades []Module
 	for _, m := range modules {
-		if m.MinorUpgrade {
+		if m.UpgradeType == MinorUpgrade {
 			minorUpgrades = append(minorUpgrades, m)
 		}
-		if m.PatchUpgrade {
+		if m.UpgradeType == PatchUpgrade {
 			patchUpgrades = append(patchUpgrades, m)
 		}
 	}
@@ -60,11 +60,11 @@ func createSelectOptions(modules []Module) []string {
 
 func moduleToSelectPrompt(mod Module) string {
 	result := fmt.Sprintf("%s %s -> %s", mod.Name, mod.FromVersion, mod.ToVersion)
-	if mod.PatchUpgrade {
+	if mod.isPatchUpgrade() {
 		result = color.GreenString(result)
 	}
 
-	if mod.MinorUpgrade {
+	if mod.isMinorUpgrade() {
 		result = color.BlueString(result)
 	}
 	return result

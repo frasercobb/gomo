@@ -10,10 +10,10 @@ import (
 func Test_CreateSelectOptions_ColoursPatch(t *testing.T) {
 	modules := []Module{
 		{
-			Name:         "frasercobb/gomo",
-			FromVersion:  semver.MustParse("1.2.3"),
-			ToVersion:    semver.MustParse("1.2.4"),
-			PatchUpgrade: true,
+			Name:        "frasercobb/gomo",
+			FromVersion: semver.MustParse("1.2.3"),
+			ToVersion:   semver.MustParse("1.2.4"),
+			UpgradeType: PatchUpgrade,
 		},
 	}
 	result := createSelectOptions(modules)
@@ -26,10 +26,10 @@ func Test_CreateSelectOptions_ColoursPatch(t *testing.T) {
 func Test_CreateSelectOptions_ColoursMinor(t *testing.T) {
 	modules := []Module{
 		{
-			Name:         "foo/bar",
-			FromVersion:  semver.MustParse("0.1.0"),
-			ToVersion:    semver.MustParse("0.2.0"),
-			MinorUpgrade: true,
+			Name:        "foo/bar",
+			FromVersion: semver.MustParse("0.1.0"),
+			ToVersion:   semver.MustParse("0.2.0"),
+			UpgradeType: MinorUpgrade,
 		},
 	}
 	result := createSelectOptions(modules)
@@ -42,16 +42,16 @@ func Test_CreateSelectOptions_ColoursMinor(t *testing.T) {
 func Test_CreateSelectOptions_GroupsByUpgradeType(t *testing.T) {
 	modules := []Module{
 		{
-			Name:         "minor/upgrade",
-			FromVersion:  semver.MustParse("0.1.1"),
-			ToVersion:    semver.MustParse("0.2.1"),
-			MinorUpgrade: true,
+			Name:        "minor/upgrade",
+			FromVersion: semver.MustParse("0.1.1"),
+			ToVersion:   semver.MustParse("0.2.1"),
+			UpgradeType: MinorUpgrade,
 		},
 		{
-			Name:         "patch/upgrade",
-			FromVersion:  semver.MustParse("0.0.1"),
-			ToVersion:    semver.MustParse("0.0.2"),
-			PatchUpgrade: true,
+			Name:        "patch/upgrade",
+			FromVersion: semver.MustParse("0.0.1"),
+			ToVersion:   semver.MustParse("0.0.2"),
+			UpgradeType: PatchUpgrade,
 		},
 	}
 	result := createSelectOptions(modules)

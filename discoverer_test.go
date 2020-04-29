@@ -153,50 +153,86 @@ func Test_ParseModules_ReturnsErrorWhenToVersionIsNotAValidSemver(t *testing.T) 
 }
 
 func Test_ParseModules_ReturnsExpectedModules(t *testing.T) {
-	wantModules := []Module{
+	testCases := []struct {
+		module Module
+	}{
 		{
-			Name:         "a-minor-upgrade",
-			FromVersion:  semver.MustParse("1.0.0"),
-			ToVersion:    semver.MustParse("1.1.0"),
-			MinorUpgrade: true,
+			module: Module{
+				Name:        "a-minor-upgrade",
+				FromVersion: semver.MustParse("1.0.0"),
+				ToVersion:   semver.MustParse("1.1.0"),
+				UpgradeType: MinorUpgrade,
+			},
 		},
 		{
-			Name:         "a-minor-upgrade-with-patch-upgrade",
-			FromVersion:  semver.MustParse("1.0.0"),
-			ToVersion:    semver.MustParse("1.1.1"),
-			PatchUpgrade: false,
-			MinorUpgrade: true,
+			module: Module{
+				Name:        "a-minor-upgrade-with-patch-upgrade",
+				FromVersion: semver.MustParse("1.0.0"),
+				ToVersion:   semver.MustParse("1.1.1"),
+				UpgradeType: MinorUpgrade,
+			},
 		},
 		{
-			Name:         "a-patch-upgrade",
-			FromVersion:  semver.MustParse("1.0.0"),
-			ToVersion:    semver.MustParse("1.0.1"),
-			PatchUpgrade: true,
-			MinorUpgrade: false,
+			module: Module{
+				Name:        "a-patch-upgrade",
+				FromVersion: semver.MustParse("1.0.0"),
+				ToVersion:   semver.MustParse("1.0.1"),
+				UpgradeType: PatchUpgrade,
+			},
+		},
+		{
+			module: Module{
+				Name:        "a-major-upgrade",
+				FromVersion: semver.MustParse("1.0.0"),
+				ToVersion:   semver.MustParse("2.0.0"),
+				UpgradeType: MajorUpgrade,
+			},
+		},
+		{
+			module: Module{
+				Name:        "a-major-upgrade-with-minor-upgrade",
+				FromVersion: semver.MustParse("1.0.0"),
+				ToVersion:   semver.MustParse("2.1.0"),
+				UpgradeType: MajorUpgrade,
+			},
+		},
+		{
+			module: Module{
+				Name:        "a-major-upgrade-with-minor-and-patch-upgrade",
+				FromVersion: semver.MustParse("1.0.0"),
+				ToVersion:   semver.MustParse("2.1.1"),
+				UpgradeType: MajorUpgrade,
+			},
 		},
 	}
-	mockExecutor := MockExecutor{}
-	d := NewDiscoverer(&mockExecutor, &MockHTTPClient{})
-	moduleListOutput := modulesToListFormat(wantModules...)
-	modules, err := d.parseModules(moduleListOutput)
-	require.NoError(t, err)
-	require.Len(t, modules, 3)
 
-	assert.Equal(t, wantModules, modules)
+	for _, testCase := range testCases {
+		t.Run(testCase.module.Name, func(t *testing.T) {
+			mockExecutor := MockExecutor{}
+			d := NewDiscoverer(&mockExecutor, &MockHTTPClient{})
+			moduleListOutput := modulesToListFormat(testCase.module)
+			modules, err := d.parseModules(moduleListOutput)
+			require.NoError(t, err)
+			require.Len(t, modules, 1)
+
+			assert.Equal(t, testCase.module, modules[0])
+		})
+	}
 }
 
 func Test_ParseModules_SkipsEmptyModuleLines(t *testing.T) {
 	wantModules := []Module{
 		{
-			Name:         "a-module-name",
-			FromVersion:  semver.MustParse("1.0.0"),
-			ToVersion:    semver.MustParse("1.1.0"),
-			MinorUpgrade: true,
+			Name:        "a-module-name",
+			FromVersion: semver.MustParse("1.0.0"),
+			ToVersion:   semver.MustParse("1.1.0"),
+			UpgradeType: MinorUpgrade,
 		},
 		{
 			Name:        "another-module-name",
 			FromVersion: semver.MustParse("1.0.0"),
 			ToVersion:   semver.MustParse("3.0.0"),
+			UpgradeType: MajorUpgrade,
 		},
 	}
 	var mockExecutor MockExecutor
@@ -215,7 +251,18 @@ func Test_ParseModules_SkipsEmptyModuleLines(t *testing.T) {
 	assert.Equal(t, wantModules, modules)
 }
 
-func Test_GetChangelog__CallsGivenHttpClient(t *testing.T) {
+func Test_GetGithubRepoFromModule_ReturnsExpectedModule(t *testing.T) {
+	wantRepo := "a-project/a-wantRepo-name"
+	m := Module{
+		Name: fmt.Sprintf("github.com/%s", wantRepo),
+	}
+	gotRepo, err := getGithubRepoFromModule(m)
+	require.NoError(t, err)
+
+	assert.Equal(t, wantRepo, gotRepo)
+}
+
+func Test_GetChangelog_CallsGivenHttpClient(t *testing.T) {
 	name := "github.com/stretchr/testify"
 	given := Module{
 		Name: name,
@@ -230,24 +277,11 @@ func Test_GetChangelog__CallsGivenHttpClient(t *testing.T) {
 	assert.Len(t, calls, 1)
 }
 
-func Test_GetGithubRepoFromModule_ReturnsExpectedModule(t *testing.T) {
-	wantRepo := "a-project/a-wantRepo-name"
-	m := Module{
-		Name: fmt.Sprintf("github.com/%s", wantRepo),
-	}
-	gotRepo, err := getGithubRepoFromModule(m)
-	require.NoError(t, err)
-
-	assert.Equal(t, wantRepo, gotRepo)
-}
-
-func Test_GetChangelog__CallsHttpClientWithExpectedQueryParams(t *testing.T) {
+func Test_GetChangelog_CallsHttpClientWithExpectedQueryParams(t *testing.T) {
 	repo := "stretchr/testify"
 	name := fmt.Sprintf("github.com/%s", repo)
 	given := Module{
-		Name:         name,
-		PatchUpgrade: false,
-		MinorUpgrade: false,
+		Name: name,
 	}
 
 	mockClient := NewMockHTTPClient()
@@ -268,9 +302,7 @@ func Test_GetChangelog__CallsHttpClientWithExpectedQueryParams(t *testing.T) {
 
 func Test_GetChangelog_ReturnsErrorFromClient(t *testing.T) {
 	given := Module{
-		Name:         "github.com/stretchr/testify",
-		PatchUpgrade: false,
-		MinorUpgrade: false,
+		Name: "github.com/stretchr/testify",
 	}
 
 	mockClient := NewMockHTTPClient()
@@ -292,6 +324,7 @@ func Test_GetChangelog_ReturnsMatchingErrorWhenCannotParseModuleName(t *testing.
 
 	assert.Contains(t, err.Error(), "unable to parse module name")
 }
+
 func Test_GetChangelog_ReturnsUnmarshallingErrorWhenResponseInvalid(t *testing.T) {
 	mockClient := NewMockHTTPClient()
 	mockClient.GivenResponseIsReturned(200, "not-valid-json", nil)
@@ -325,12 +358,6 @@ func Test_GetChangelog_ReturnsExpectedURL(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, wantURL, gotChangelog)
-}
-
-func newValidModule() Module {
-	return Module{
-		Name: "github.com/project/repo",
-	}
 }
 
 func Test_GetChangelog_ReturnsRootChangelogIfMultipleFound(t *testing.T) {
@@ -390,6 +417,12 @@ func Test_GetChangelog_ReturnsErrorWhenNoSearchResultsFound(t *testing.T) {
 	require.Error(t, err)
 
 	assert.Contains(t, err.Error(), "failed to find a root level CHANGELOG.md")
+}
+
+func newValidModule() Module {
+	return Module{
+		Name: "github.com/project/repo",
+	}
 }
 
 func modulesToListFormat(modules ...Module) string {
